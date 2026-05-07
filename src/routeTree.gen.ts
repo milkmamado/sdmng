@@ -9,14 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as BranchRouteImport } from './routes/$branch'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as BranchIndexRouteImport } from './routes/$branch.index'
-import { Route as BranchAuthRouteImport } from './routes/$branch.auth'
 
-const BranchRoute = BranchRouteImport.update({
-  id: '/$branch',
-  path: '/$branch',
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -24,55 +22,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BranchIndexRoute = BranchIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => BranchRoute,
-} as any)
-const BranchAuthRoute = BranchAuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => BranchRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/$branch': typeof BranchRouteWithChildren
-  '/$branch/auth': typeof BranchAuthRoute
-  '/$branch/': typeof BranchIndexRoute
+  '/$': typeof SplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/$branch/auth': typeof BranchAuthRoute
-  '/$branch': typeof BranchIndexRoute
+  '/$': typeof SplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/$branch': typeof BranchRouteWithChildren
-  '/$branch/auth': typeof BranchAuthRoute
-  '/$branch/': typeof BranchIndexRoute
+  '/$': typeof SplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$branch' | '/$branch/auth' | '/$branch/'
+  fullPaths: '/' | '/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$branch/auth' | '/$branch'
-  id: '__root__' | '/' | '/$branch' | '/$branch/auth' | '/$branch/'
+  to: '/' | '/$'
+  id: '__root__' | '/' | '/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BranchRoute: typeof BranchRouteWithChildren
+  SplatRoute: typeof SplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/$branch': {
-      id: '/$branch'
-      path: '/$branch'
-      fullPath: '/$branch'
-      preLoaderRoute: typeof BranchRouteImport
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -82,39 +65,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$branch/': {
-      id: '/$branch/'
-      path: '/'
-      fullPath: '/$branch/'
-      preLoaderRoute: typeof BranchIndexRouteImport
-      parentRoute: typeof BranchRoute
-    }
-    '/$branch/auth': {
-      id: '/$branch/auth'
-      path: '/auth'
-      fullPath: '/$branch/auth'
-      preLoaderRoute: typeof BranchAuthRouteImport
-      parentRoute: typeof BranchRoute
-    }
   }
 }
 
-interface BranchRouteChildren {
-  BranchAuthRoute: typeof BranchAuthRoute
-  BranchIndexRoute: typeof BranchIndexRoute
-}
-
-const BranchRouteChildren: BranchRouteChildren = {
-  BranchAuthRoute: BranchAuthRoute,
-  BranchIndexRoute: BranchIndexRoute,
-}
-
-const BranchRouteWithChildren =
-  BranchRoute._addFileChildren(BranchRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BranchRoute: BranchRouteWithChildren,
+  SplatRoute: SplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
