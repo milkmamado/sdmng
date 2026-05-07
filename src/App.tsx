@@ -1,10 +1,6 @@
 // @ts-nocheck
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "./components/Layout";
 import { Dashboard } from "./components/Dashboard";
@@ -25,15 +21,6 @@ import UserManual from "./pages/UserManual";
 import CRMBookmarklet from "./pages/CRMBookmarklet";
 import PackageIntegration from "./pages/PackageIntegration";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 2 * 60 * 1000, // 2분간 캐시 데이터를 신선한 것으로 간주
-      refetchOnWindowFocus: false, // 탭 전환 시 자동 refetch 방지
-    },
-  },
-});
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -187,18 +174,6 @@ function AppRoutes() {
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => <AppRoutes />;
 
 export default App;
