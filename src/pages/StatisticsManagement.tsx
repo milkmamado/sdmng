@@ -39,6 +39,7 @@ export default function StatisticsManagement() {
   const [selectedManager, setSelectedManager] = useState<string>('all');
   const [managers, setManagers] = useState<{ id: string; name: string }[]>([]);
   const [isMasterOrAdmin, setIsMasterOrAdmin] = useState(false);
+  const [roleChecked, setRoleChecked] = useState(false);
   const [managerStats, setManagerStats] = useState<ManagerStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalStats, setTotalStats] = useState({
@@ -103,24 +104,9 @@ export default function StatisticsManagement() {
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !roleChecked) return;
 
-    // 관리자/마스터는 매니저 목록이 먼저 로딩된 후에만 통계를 조회하도록 보호
-    if (isMasterOrAdmin) {
-      if (selectedManager === 'all' && managers.length === 0) {
-        // 전체 보기인데 아직 매니저 목록을 못 불러온 상태면 대기
-        return;
-      }
-
-      if (selectedManager !== 'all' && managers.length === 0) {
-        // 특정 실장 보기인데 매니저 목록이 비어 있으면 역시 대기
-        return;
-      }
-    }
-
-    if (isMasterOrAdmin || selectedManager !== 'all') {
-      fetchStatistics();
-    }
+    fetchStatistics();
 
     // Realtime 구독 설정 - 관련 테이블 변경 감지
     const channel = supabase
@@ -133,7 +119,7 @@ export default function StatisticsManagement() {
           table: 'patients'
         },
         () => {
-          if (user && (isMasterOrAdmin || selectedManager !== 'all')) {
+          if (user && roleChecked) {
             fetchStatistics();
           }
         }
@@ -146,7 +132,7 @@ export default function StatisticsManagement() {
           table: 'daily_patient_status'
         },
         () => {
-          if (user && (isMasterOrAdmin || selectedManager !== 'all')) {
+          if (user && roleChecked) {
             fetchStatistics();
           }
         }
@@ -159,7 +145,7 @@ export default function StatisticsManagement() {
           table: 'package_transactions'
         },
         () => {
-          if (user && (isMasterOrAdmin || selectedManager !== 'all')) {
+          if (user && roleChecked) {
             fetchStatistics();
           }
         }
@@ -169,7 +155,7 @@ export default function StatisticsManagement() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedMonth, selectedManager, user, isMasterOrAdmin, managers]);
+  }, [selectedMonth, selectedManager, user, roleChecked, isMasterOrAdmin, managers]);
 
   const checkUserRole = async () => {
     if (!user) {
