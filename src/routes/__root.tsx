@@ -5,7 +5,6 @@ import {
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
-import { Toaster as ShadToaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 
@@ -70,7 +69,7 @@ function RootComponent() {
         <AuthProvider>
           <Outlet />
           <Toaster />
-          <ShadToaster />
+          
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
