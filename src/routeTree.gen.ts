@@ -9,18 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BranchRouteImport } from './routes/$branch'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BranchIndexRouteImport } from './routes/$branch.index'
+import { Route as BranchAuthRouteImport } from './routes/$branch.auth'
 
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const BranchRoute = BranchRouteImport.update({
+  id: '/$branch',
+  path: '/$branch',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -28,51 +24,55 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BranchIndexRoute = BranchIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BranchRoute,
+} as any)
+const BranchAuthRoute = BranchAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => BranchRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
-  '/dashboard': typeof DashboardRoute
+  '/$branch': typeof BranchRouteWithChildren
+  '/$branch/auth': typeof BranchAuthRoute
+  '/$branch/': typeof BranchIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
-  '/dashboard': typeof DashboardRoute
+  '/$branch/auth': typeof BranchAuthRoute
+  '/$branch': typeof BranchIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
-  '/dashboard': typeof DashboardRoute
+  '/$branch': typeof BranchRouteWithChildren
+  '/$branch/auth': typeof BranchAuthRoute
+  '/$branch/': typeof BranchIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard'
+  fullPaths: '/' | '/$branch' | '/$branch/auth' | '/$branch/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard'
-  id: '__root__' | '/' | '/auth' | '/dashboard'
+  to: '/' | '/$branch/auth' | '/$branch'
+  id: '__root__' | '/' | '/$branch' | '/$branch/auth' | '/$branch/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRoute: typeof AuthRoute
-  DashboardRoute: typeof DashboardRoute
+  BranchRoute: typeof BranchRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/$branch': {
+      id: '/$branch'
+      path: '/$branch'
+      fullPath: '/$branch'
+      preLoaderRoute: typeof BranchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -82,14 +82,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$branch/': {
+      id: '/$branch/'
+      path: '/'
+      fullPath: '/$branch/'
+      preLoaderRoute: typeof BranchIndexRouteImport
+      parentRoute: typeof BranchRoute
+    }
+    '/$branch/auth': {
+      id: '/$branch/auth'
+      path: '/auth'
+      fullPath: '/$branch/auth'
+      preLoaderRoute: typeof BranchAuthRouteImport
+      parentRoute: typeof BranchRoute
+    }
   }
 }
 
+interface BranchRouteChildren {
+  BranchAuthRoute: typeof BranchAuthRoute
+  BranchIndexRoute: typeof BranchIndexRoute
+}
+
+const BranchRouteChildren: BranchRouteChildren = {
+  BranchAuthRoute: BranchAuthRoute,
+  BranchIndexRoute: BranchIndexRoute,
+}
+
+const BranchRouteWithChildren =
+  BranchRoute._addFileChildren(BranchRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRoute: AuthRoute,
-  DashboardRoute: DashboardRoute,
+  BranchRoute: BranchRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
