@@ -98,10 +98,8 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
   // 환자 데이터 로드 및 설정
   useEffect(() => {
     if (patient) {
-      // 대분류 옵션이 로드될 때까지 대기
-      if (diagnosisCategoryOptions.length === 0 || hospitalCategoryOptions.length === 0) {
-        return;
-      }
+      // 옵션이 비어있어도 폼은 표시 (옵션은 select 항목용일 뿐)
+
 
       setFormData({
         name: patient.name || '',
