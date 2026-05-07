@@ -413,7 +413,7 @@ export default function FirstVisitManagement() {
           <h1 className="text-3xl font-bold">초진관리</h1>
         </div>
         {userRole === 'manager' && (
-          <Button onClick={() => setShowLookupDialog(true)} className="flex items-center gap-2">
+          <Button onClick={() => { localStorage.removeItem('crm_update_mode'); setShowLookupDialog(true); }} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             새 환자 등록
           </Button>
