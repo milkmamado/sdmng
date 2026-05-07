@@ -69,7 +69,7 @@ function RootComponent() {
         <AuthProvider>
           <Outlet />
           <Toaster />
-          <ShadToaster />
+          
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
