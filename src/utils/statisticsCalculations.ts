@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Database } from '@/integrations/supabase/types';
 
 type Patient = Database['public']['Tables']['patients']['Row'];

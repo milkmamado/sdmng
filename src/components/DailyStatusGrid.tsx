@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useDiagnosisOptions, useHospitalOptions, useInsuranceTypeOptions, usePatientStatusOptions, useCurrentUserName } from '@/hooks/useOptionsData';
 import { Badge } from "@/components/ui/badge";

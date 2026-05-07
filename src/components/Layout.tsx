@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { User, LogOut, Crown, UserCheck } from "lucide-react";

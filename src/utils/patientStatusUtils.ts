@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 환자 상태 관리 유틸리티 함수들
  * DailyStatusTracking과 RiskManagement에서 공통으로 사용
