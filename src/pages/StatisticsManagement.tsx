@@ -164,6 +164,7 @@ export default function StatisticsManagement() {
     }
 
     console.log('[checkUserRole] Starting with user:', user.id, user.email);
+    setRoleChecked(false);
 
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
@@ -218,6 +219,8 @@ export default function StatisticsManagement() {
       console.log('[checkUserRole] Regular manager, setting selectedManager to:', user.id);
       setSelectedManager(user.id);
     }
+
+    setRoleChecked(true);
   };
 
   const fetchStatistics = async () => {
