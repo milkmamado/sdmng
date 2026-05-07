@@ -101,9 +101,10 @@ export default function FirstVisitManagement() {
     // postMessage로 CRM 데이터 수신 (window.opener에서 전송)
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'crm-patient-data' && event.data?.data) {
-        // 업데이트 모드인 경우 무시 (PatientBasicForm에서 처리)
+        // 업데이트 모드(기존 환자 편집 화면이 떠 있는 상태)인 경우에만 무시
+        // 단, 새 환자 등록 다이얼로그가 열려 있으면 우선 처리
         const updateMode = localStorage.getItem('crm_update_mode');
-        if (updateMode) {
+        if (updateMode && !showLookupDialog && !showFullForm) {
           return;
         }
 
@@ -412,7 +413,7 @@ export default function FirstVisitManagement() {
           <h1 className="text-3xl font-bold">초진관리</h1>
         </div>
         {userRole === 'manager' && (
-          <Button onClick={() => setShowLookupDialog(true)} className="flex items-center gap-2">
+          <Button onClick={() => { localStorage.removeItem('crm_update_mode'); setShowLookupDialog(true); }} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             새 환자 등록
           </Button>
