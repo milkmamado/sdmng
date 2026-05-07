@@ -1,5 +1,5 @@
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
-import { Outlet, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import { ClientOnly, Outlet, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -32,11 +32,13 @@ function RootComponent() {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <Outlet />
-          </AuthProvider>
-        </BrowserRouter>
+        <ClientOnly fallback={<div className="min-h-screen bg-background" />}>
+          <BrowserRouter>
+            <AuthProvider>
+              <Outlet />
+            </AuthProvider>
+          </BrowserRouter>
+        </ClientOnly>
       </TooltipProvider>
     </QueryClientProvider>
   );
