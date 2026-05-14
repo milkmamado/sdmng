@@ -39,9 +39,9 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/" element={<BranchSelection />} />
+        <Route path="/" element={<Navigate to="/성동/auth" replace />} />
         <Route path="/:branch/auth" element={<BranchAuth />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/성동/auth" replace />} />
       </Routes>
     );
   }
