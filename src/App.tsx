@@ -168,7 +168,7 @@ function AppRoutes() {
       </Route>
       
       {/* 루트 경로 처리 */}
-      <Route path="/" element={<Navigate to="/광명" replace />} />
+      <Route path="/" element={<Navigate to="/성동" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
