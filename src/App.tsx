@@ -39,9 +39,9 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/" element={<BranchSelection />} />
+        <Route path="/" element={<Navigate to="/성동/auth" replace />} />
         <Route path="/:branch/auth" element={<BranchAuth />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/성동/auth" replace />} />
       </Routes>
     );
   }
@@ -168,7 +168,7 @@ function AppRoutes() {
       </Route>
       
       {/* 루트 경로 처리 */}
-      <Route path="/" element={<Navigate to="/광명" replace />} />
+      <Route path="/" element={<Navigate to="/성동" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
