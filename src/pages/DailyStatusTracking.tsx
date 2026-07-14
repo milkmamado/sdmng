@@ -49,6 +49,7 @@ interface Patient {
   inflow_date?: string;
   consultation_date?: string;
   crm_memo?: string;
+  counseling_content?: string;
   special_note_1?: string;
   special_note_2?: string;
   treatment_memo_1?: string;
@@ -175,7 +176,7 @@ export default function DailyStatusTracking() {
           payment_amount, display_order,
           inflow_date, consultation_date, memo1,
           special_note_1, special_note_2,
-          treatment_memo_1, treatment_memo_2, crm_memo,
+          treatment_memo_1, treatment_memo_2, crm_memo, counseling_content,
           hospital_category, hospital_branch,
           resident_number_masked,
           admission_cycles (
