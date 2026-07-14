@@ -46,6 +46,7 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
     hospital_branch: '',        // 이전병원 중분류 (API)
     address: '',                // 주소 (API)
     crm_memo: '',               // CRM메모 (API)
+    counseling_content: '',     // 상담내용 (API)
     special_note_1: '',         // 특이사항1 (API)
     special_note_2: '',         // 특이사항2 (API)
     treatment_memo_1: '',       // 진료메모1 (API)
