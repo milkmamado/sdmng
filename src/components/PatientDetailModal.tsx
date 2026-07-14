@@ -675,6 +675,10 @@ export function PatientDetailModal({
                   <Label>CRM메모</Label>
                   <Textarea value={selectedPatientDetail?.crm_memo || ''} disabled className="bg-muted" rows={3} />
                 </div>
+                <div className="md:col-span-2 lg:col-span-3">
+                  <Label>상담내용</Label>
+                  <Textarea value={selectedPatientDetail?.counseling_content || ''} disabled className="bg-muted" rows={3} />
+                </div>
               </div>
             </div>
 
