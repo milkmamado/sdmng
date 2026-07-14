@@ -62,6 +62,7 @@ interface Patient {
   monthly_avg_outpatient_days?: number;
   payment_amount?: number;
   crm_memo?: string;
+  counseling_content?: string;
   special_note_1?: string;
   special_note_2?: string;
   treatment_memo_1?: string;
@@ -2392,6 +2393,17 @@ export default function PatientListManagement() {
                     <Label>CRM메모</Label>
                     <Textarea
                       value={selectedPatientDetail?.crm_memo || ''}
+                      disabled
+                      className="bg-muted"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* 상담내용 */}
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <Label>상담내용</Label>
+                    <Textarea
+                      value={selectedPatientDetail?.counseling_content || ''}
                       disabled
                       className="bg-muted"
                       rows={3}
