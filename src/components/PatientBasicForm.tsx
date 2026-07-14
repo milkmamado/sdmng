@@ -117,6 +117,7 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         hospital_branch: patient.hospital_branch || '',
         address: patient.address || '',
         crm_memo: patient.crm_memo || '',
+        counseling_content: patient.counseling_content || '',
         special_note_1: patient.special_note_1 || '',
         special_note_2: patient.special_note_2 || '',
         treatment_memo_1: patient.treatment_memo_1 || '',
@@ -398,7 +399,7 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         'name', 'customer_number', 'resident_number_masked', 'phone', 
         'gender', 'age', 'visit_motivation', 
         'diagnosis_category', 'diagnosis_detail', 'hospital_category', 'hospital_branch', 
-        'address', 'crm_memo', 'special_note_1', 'special_note_2', 
+        'address', 'crm_memo', 'counseling_content', 'special_note_1', 'special_note_2', 
         'treatment_memo_1', 'treatment_memo_2'
       ];
 
@@ -517,6 +518,7 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         hospital_branch: formData.hospital_branch || null,
         address: formData.address || null,
         crm_memo: formData.crm_memo || null,
+        counseling_content: formData.counseling_content || null,
         special_note_1: formData.special_note_1 || null,
         special_note_2: formData.special_note_2 || null,
         treatment_memo_1: formData.treatment_memo_1 || null,
@@ -603,6 +605,7 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         hospital_branch: '',
         address: '',
         crm_memo: '',
+        counseling_content: '',
         special_note_1: '',
         special_note_2: '',
         treatment_memo_1: '',
@@ -909,6 +912,21 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
               id="crm_memo"
               name="crm_memo"
               value={formData.crm_memo}
+              onChange={handleInputChange}
+              placeholder="API에서 자동 입력"
+              rows={3}
+              disabled
+              className="bg-muted"
+            />
+          </div>
+
+          {/* 상담내용 */}
+          <div className="md:col-span-2 lg:col-span-3">
+            <Label htmlFor="counseling_content">상담내용</Label>
+            <Textarea
+              id="counseling_content"
+              name="counseling_content"
+              value={formData.counseling_content}
               onChange={handleInputChange}
               placeholder="API에서 자동 입력"
               rows={3}
