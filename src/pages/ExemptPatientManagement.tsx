@@ -50,6 +50,7 @@ interface Patient {
   inflow_date?: string;
   consultation_date?: string;
   crm_memo?: string;
+  counseling_content?: string;
   special_note_1?: string;
   special_note_2?: string;
   treatment_memo_1?: string;
@@ -162,7 +163,7 @@ export default function ExemptPatientManagement() {
           payment_amount,
           inflow_date, consultation_date, memo1,
           special_note_1, special_note_2,
-          treatment_memo_1, treatment_memo_2, crm_memo,
+          treatment_memo_1, treatment_memo_2, crm_memo, counseling_content,
           hospital_category, hospital_branch,
           resident_number_masked,
           admission_cycles (
@@ -684,6 +685,12 @@ export default function ExemptPatientManagement() {
                 <div>
                   <Label className="text-muted-foreground">CRM 메모</Label>
                   <p className="whitespace-pre-wrap">{selectedPatient.crm_memo}</p>
+                </div>
+              )}
+              {selectedPatient.counseling_content && (
+                <div>
+                  <Label className="text-muted-foreground">상담내용</Label>
+                  <p className="whitespace-pre-wrap">{selectedPatient.counseling_content}</p>
                 </div>
               )}
             </div>

@@ -43,6 +43,7 @@ interface Patient {
   diet_info?: string;
   visit_motivation?: string;
   crm_memo?: string;
+  counseling_content?: string;
   management_status?: string;
   memo1?: string;
 }
@@ -1052,6 +1053,12 @@ export default function RiskManagement() {
                     <span className="font-medium">CRM메모:</span>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                       {selectedPatientDetail.crm_memo || '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="font-medium">상담내용:</span>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {selectedPatientDetail.counseling_content || '-'}
                     </p>
                   </div>
                 </CardContent>
