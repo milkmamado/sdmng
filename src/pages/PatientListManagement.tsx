@@ -341,7 +341,7 @@ export default function PatientListManagement() {
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
       const actualVisitStatuses = ['입원', '퇴원', '재원', '외래', '낮병동'];
-      const inpatientStatuses = ['입원', '재입원', '낮병동'];
+      const inpatientStatuses = ['입원', '재입원', '재원', '낮병동'];
       const outpatientStatuses = ['외래'];
       
       // 상태 업데이트가 필요한 환자 수집 (배치 업데이트용)
