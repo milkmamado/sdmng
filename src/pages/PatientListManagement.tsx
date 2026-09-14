@@ -236,6 +236,11 @@ export default function PatientListManagement() {
   useEffect(() => {
     // 기존 검색 + 필터 로직 통합
     const filtered = patients.filter(patient => {
+      // 교차 열람 범위 필터 ('내 환자' 기본값)
+      if (!isMaster && viewScope === 'mine' && userId) {
+        if (patient.assigned_manager && patient.assigned_manager !== userId) return false;
+      }
+
       // 기존 검색 필터
       if (searchTerm.trim()) {
         const search = searchTerm.toLowerCase();
