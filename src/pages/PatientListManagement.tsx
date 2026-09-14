@@ -1816,6 +1816,7 @@ export default function PatientListManagement() {
               <FileSpreadsheet className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold">입원 매출 관리</h3>
             </div>
+            {!detailReadOnly && (
             <Button
               size="sm"
               variant="destructive"
@@ -1826,6 +1827,7 @@ export default function PatientListManagement() {
               <Trash2 className="h-4 w-4" />
               데이터 삭제
             </Button>
+            )}
           </div>
           
           {packageTransactions.filter(t => t.transaction_type === 'inpatient_revenue').length > 0 ? (
@@ -1855,6 +1857,7 @@ export default function PatientListManagement() {
                           <TableCell>{new Date(t.transaction_date).toLocaleDateString('ko-KR')}</TableCell>
                           <TableCell className="text-right font-semibold">{t.amount.toLocaleString()}원</TableCell>
                           <TableCell className="text-right">
+                            {!detailReadOnly && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1866,6 +1869,7 @@ export default function PatientListManagement() {
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1901,6 +1905,7 @@ export default function PatientListManagement() {
               <FileSpreadsheet className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold">외래 매출 관리</h3>
             </div>
+            {!detailReadOnly && (
             <Button
               size="sm"
               variant="destructive"
@@ -1911,6 +1916,7 @@ export default function PatientListManagement() {
               <Trash2 className="h-4 w-4" />
               데이터 삭제
             </Button>
+            )}
           </div>
           
           {packageTransactions.filter(t => t.transaction_type === 'outpatient_revenue').length > 0 ? (
@@ -1940,6 +1946,7 @@ export default function PatientListManagement() {
                           <TableCell>{new Date(t.transaction_date).toLocaleDateString('ko-KR')}</TableCell>
                           <TableCell className="text-right font-semibold">{t.amount.toLocaleString()}원</TableCell>
                           <TableCell className="text-right">
+                            {!detailReadOnly && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1951,6 +1958,7 @@ export default function PatientListManagement() {
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
