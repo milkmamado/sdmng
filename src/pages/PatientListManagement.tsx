@@ -2090,10 +2090,11 @@ export default function PatientListManagement() {
                 {filteredPatients.map((patient) => {
                   const bgColor = getManagementStatusBgColor((patient as any).management_status);
                   const isOut = isExcludedFromTracking((patient as any).management_status);
+                  const isOthers = !canEditManager(patient.assigned_manager);
                   return (
                     <TableRow 
                       key={patient.id}
-                      className={`cursor-pointer hover:bg-muted/50 ${bgColor} ${isOut ? 'italic' : ''}`}
+                      className={`cursor-pointer hover:bg-muted/50 ${bgColor} ${isOut ? 'italic' : ''} ${isOthers ? 'opacity-80' : ''}`}
                       onClick={() => {
                         setSelectedPatientDetail(patient);
                         setViewMode('full');
