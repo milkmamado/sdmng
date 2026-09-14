@@ -126,6 +126,9 @@ export function DailyStatusGrid({
   const [selectedPatientDetail, setSelectedPatientDetail] = useState<any | null>(null);
   const [editingManagementStatus, setEditingManagementStatus] = useState<string>('');
   
+  // 교차 열람(읽기 전용) 권한
+  const { canEditManager } = useCrossView();
+
   // localStorage에서 스크롤 위치 복원
   const scrollStorageKey = `daily-tracking-scroll-${yearMonth}`;
   const [savedScrollPosition, setSavedScrollPosition] = useState<number>(() => {
