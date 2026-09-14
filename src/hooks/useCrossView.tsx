@@ -48,12 +48,13 @@ export function useCrossView() {
   /** 해당 담당자의 환자를 "수정"할 수 있는가 */
   const canEditManager = useCallback(
     (assignedManager?: string | null) => {
-      if (isMaster) return true;
-      if (!user) return false;
+      // 마스터 및 교차 열람 권한이 없는 사용자는 기존 동작 그대로 유지
+      if (isMaster || !hasCrossView) return true;
+      if (!user) return true;
       if (!assignedManager) return true;
       return assignedManager === user.id;
     },
-    [isMaster, user?.id]
+    [isMaster, hasCrossView, user?.id]
   );
 
   /** 해당 환자가 교차 열람으로만 보이는(읽기 전용) 환자인가 */
