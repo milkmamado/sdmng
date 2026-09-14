@@ -1480,6 +1480,7 @@ export function DailyStatusGrid({
                         >
                           {patient.name}
                         </div>
+                        {canEditManager(patient.assigned_manager) && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1492,9 +1493,11 @@ export function DailyStatusGrid({
                         >
                           <CalendarDays className="h-3 w-3" />
                         </Button>
+                        )}
                       </div>
                       <div className="text-[10px] text-muted-foreground">
                         담당: {patient.manager_name || '-'}
+                        {!canEditManager(patient.assigned_manager) && ' · 읽기전용'}
                       </div>
                       <div className="text-[10px] text-muted-foreground">
                         진단: {patient.diagnosis_category || '-'}
