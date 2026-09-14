@@ -1704,6 +1704,7 @@ export default function PatientListManagement() {
             >
               내역삭제
             </Button>
+            </>)}
           </div>
         </div>
 
