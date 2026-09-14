@@ -872,6 +872,8 @@ export function DailyStatusGrid({
   };
 
   const handleCellClick = (patientId: string, day: number, patient: Patient) => {
+    // 교차 열람(읽기 전용) 환자는 편집 진입 차단
+    if (!canEditManager(patient?.assigned_manager)) return;
     const date = `${yearMonth}-${String(day).padStart(2, '0')}`;
     const existingStatus = getStatusForDate(patientId, date);
     
