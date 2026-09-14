@@ -64,6 +64,39 @@ export type Database = {
           },
         ]
       }
+      cross_view_grants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          reason: string | null
+          target_manager_id: string
+          updated_at: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          target_manager_id: string
+          updated_at?: string
+          viewer_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          target_manager_id?: string
+          updated_at?: string
+          viewer_id?: string
+        }
+        Relationships: []
+      }
       daily_patient_status: {
         Row: {
           branch: Database["public"]["Enums"]["branch_type"]
@@ -996,6 +1029,10 @@ export type Database = {
       calculate_stay_days: {
         Args: { admission_date: string; discharge_date?: string }
         Returns: number
+      }
+      can_view_manager: {
+        Args: { _target: string; _viewer: string }
+        Returns: boolean
       }
       get_next_cycle_number: { Args: { patient_uuid: string }; Returns: number }
       has_role:
