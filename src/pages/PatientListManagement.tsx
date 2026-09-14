@@ -2851,14 +2851,16 @@ export default function PatientListManagement() {
                   </div>
                 </div>
                 
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button 
-                    onClick={saveAllEditingFields}
-                    disabled={Object.keys(editingFields).length === 0 || userRole === 'admin'}
-                  >
-                    수정 저장
-                  </Button>
-                </div>
+                {!detailReadOnly && (
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button 
+                      onClick={saveAllEditingFields}
+                      disabled={Object.keys(editingFields).length === 0 || userRole === 'admin'}
+                    >
+                      수정 저장
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* 패키지 관리 섹션 */}
