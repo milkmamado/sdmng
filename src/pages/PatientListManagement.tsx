@@ -2116,7 +2116,13 @@ export default function PatientListManagement() {
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-[10px] text-muted-foreground/30">담당</span>
-                        <span className="whitespace-nowrap">{patient.manager_name || '-'}</span>
+                        {isOthers ? (
+                          <Badge variant="secondary" className="w-fit whitespace-nowrap text-muted-foreground font-normal">
+                            {patient.manager_name || '-'} · 읽기전용
+                          </Badge>
+                        ) : (
+                          <span className="whitespace-nowrap">{patient.manager_name || '-'}</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
