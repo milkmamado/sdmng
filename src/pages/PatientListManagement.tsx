@@ -1996,6 +1996,18 @@ export default function PatientListManagement() {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <CardTitle>유입 환자 목록 ({filteredPatients.length}명)</CardTitle>
+              {hasCrossView && (
+                <ToggleGroup
+                  type="single"
+                  size="sm"
+                  variant="outline"
+                  value={viewScope}
+                  onValueChange={(v) => v && setViewScope(v as 'mine' | 'all')}
+                >
+                  <ToggleGroupItem value="mine" aria-label="내 환자">내 환자</ToggleGroupItem>
+                  <ToggleGroupItem value="all" aria-label="전체">전체</ToggleGroupItem>
+                </ToggleGroup>
+              )}
               <MonthFilter
                 selectedMonth={selectedMonth}
                 onMonthChange={setSelectedMonth}
