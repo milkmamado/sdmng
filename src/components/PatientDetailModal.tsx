@@ -375,8 +375,6 @@ export function PatientDetailModal({
           </div>
           <div className="flex gap-2">
             {detailReadOnly ? null : (<>
-            {!detailReadOnly && (
-            {!detailReadOnly && (
             <Button
               onClick={handleSyncPackage}
               disabled={syncingPackage || !selectedPatientDetail?.customer_number}
@@ -481,7 +479,6 @@ export function PatientDetailModal({
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">입원 매출 관리</h3>
                 {!detailReadOnly && (
-                {!detailReadOnly && (
                 <Button
                   size="sm"
                   variant="destructive"
@@ -514,6 +511,7 @@ export function PatientDetailModal({
                             <TableCell>{formatDate(t.transaction_date)}</TableCell>
                             <TableCell className="text-right font-semibold">{t.amount.toLocaleString()}원</TableCell>
                             <TableCell className="text-right">
+                              {!detailReadOnly && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -525,7 +523,7 @@ export function PatientDetailModal({
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
-            )}
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -543,6 +541,7 @@ export function PatientDetailModal({
             <div className="space-y-4 pt-6 border-t">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">외래 매출 관리</h3>
+                {!detailReadOnly && (
                 <Button
                   size="sm"
                   variant="destructive"
@@ -575,6 +574,7 @@ export function PatientDetailModal({
                             <TableCell>{formatDate(t.transaction_date)}</TableCell>
                             <TableCell className="text-right font-semibold">{t.amount.toLocaleString()}원</TableCell>
                             <TableCell className="text-right">
+                              {!detailReadOnly && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -586,7 +586,7 @@ export function PatientDetailModal({
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
-            )}
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
