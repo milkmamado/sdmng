@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useCrossView } from "@/hooks/useCrossView";
 import { isShortTermTreatmentPatient } from "@/utils/patientStatusUtils";
 
 interface AdmissionCycle {
@@ -125,6 +126,10 @@ export function DailyStatusGrid({
   const [selectedPatientDetail, setSelectedPatientDetail] = useState<any | null>(null);
   const [editingManagementStatus, setEditingManagementStatus] = useState<string>('');
   
+  // 교차 열람(읽기 전용) 권한
+  const { canEditManager } = useCrossView();
+  const detailReadOnly = !!selectedPatientDetail && !canEditManager(selectedPatientDetail.assigned_manager);
+
   // localStorage에서 스크롤 위치 복원
   const scrollStorageKey = `daily-tracking-scroll-${yearMonth}`;
   const [savedScrollPosition, setSavedScrollPosition] = useState<number>(() => {
@@ -692,6 +697,7 @@ export function DailyStatusGrid({
 
   const saveAllEditingFields = async () => {
     if (!selectedPatientDetail || Object.keys(editingFields).length === 0) return;
+    if (!canEditManager(selectedPatientDetail.assigned_manager)) return;
 
     try {
       const { error } = await supabase
@@ -872,6 +878,8 @@ export function DailyStatusGrid({
   };
 
   const handleCellClick = (patientId: string, day: number, patient: Patient) => {
+    // 교차 열람(읽기 전용) 환자는 편집 진입 차단
+    if (!canEditManager(patient?.assigned_manager)) return;
     const date = `${yearMonth}-${String(day).padStart(2, '0')}`;
     const existingStatus = getStatusForDate(patientId, date);
     
@@ -1474,6 +1482,7 @@ export function DailyStatusGrid({
                         >
                           {patient.name}
                         </div>
+                        {canEditManager(patient.assigned_manager) && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1486,9 +1495,11 @@ export function DailyStatusGrid({
                         >
                           <CalendarDays className="h-3 w-3" />
                         </Button>
+                        )}
                       </div>
                       <div className="text-[10px] text-muted-foreground">
                         담당: {patient.manager_name || '-'}
+                        {!canEditManager(patient.assigned_manager) && ' · 읽기전용'}
                       </div>
                       <div className="text-[10px] text-muted-foreground">
                         진단: {patient.diagnosis_category || '-'}
@@ -1703,6 +1714,12 @@ export function DailyStatusGrid({
               {selectedPatientDetail?.name} - 환자 상세정보
             </DialogTitle>
           </DialogHeader>
+
+          {detailReadOnly && (
+            <div className="rounded-md border border-border bg-muted px-4 py-3 text-base font-semibold text-muted-foreground">
+              읽기 전용 · 담당 {selectedPatientDetail?.manager_name || '-'}
+            </div>
+          )}
           
           {selectedPatientDetail && (
             <div className="space-y-6 mt-4">
@@ -2285,6 +2302,7 @@ export function DailyStatusGrid({
                   </div>
                 </div>
                 
+                {!detailReadOnly && (
                 <div className="flex justify-end gap-2 pt-4">
                   <Button 
                     onClick={saveAllEditingFields}
@@ -2293,6 +2311,7 @@ export function DailyStatusGrid({
                     수정 저장
                   </Button>
                 </div>
+                )}
               </div>
 
               {/* 패키지 관리 섹션 */}

@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { isShortTermTreatmentPatient } from "@/utils/patientStatusUtils";
+import { useCrossView } from "@/hooks/useCrossView";
 
 interface Patient {
   id: string;
@@ -107,6 +108,7 @@ export function PatientDetailModal({
 }: PatientDetailModalProps) {
   const { userRole } = useAuth();
   const { toast } = useToast();
+  const { canEditManager } = useCrossView();
   
   const [selectedPatientDetail, setSelectedPatientDetail] = useState<Patient | null>(null);
   const [viewMode, setViewMode] = useState<'full' | 'treatment-only'>(initialViewMode);
@@ -118,6 +120,7 @@ export function PatientDetailModal({
   const { data: currentUserName = '' } = useCurrentUserName();
   const [packageTransactions, setPackageTransactions] = useState<PackageTransaction[]>([]);
   const [syncingPackage, setSyncingPackage] = useState(false);
+  const detailReadOnly = !!selectedPatientDetail && !canEditManager(selectedPatientDetail.assigned_manager);
 
   useEffect(() => {
     if (patient && open) {
@@ -150,6 +153,15 @@ export function PatientDetailModal({
 
   const saveAllEditingFields = async () => {
     if (!selectedPatientDetail || Object.keys(editingFields).length === 0) return;
+
+    if (!canEditManager(selectedPatientDetail.assigned_manager)) {
+      toast({
+        title: "읽기 전용",
+        description: "다른 담당자의 환자 정보는 수정할 수 없습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (userRole === 'admin') {
       toast({
@@ -362,6 +374,7 @@ export function PatientDetailModal({
             <h3 className="text-lg font-semibold">패키지 관리</h3>
           </div>
           <div className="flex gap-2">
+            {detailReadOnly ? null : (<>
             <Button
               onClick={handleSyncPackage}
               disabled={syncingPackage || !selectedPatientDetail?.customer_number}
@@ -379,6 +392,7 @@ export function PatientDetailModal({
             >
               내역삭제
             </Button>
+            </>)}
           </div>
         </div>
 
@@ -464,6 +478,7 @@ export function PatientDetailModal({
             <div className="space-y-4 pt-6 border-t">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">입원 매출 관리</h3>
+                {!detailReadOnly && (
                 <Button
                   size="sm"
                   variant="destructive"
@@ -474,6 +489,7 @@ export function PatientDetailModal({
                   <Trash2 className="h-4 w-4" />
                   데이터 삭제
                 </Button>
+                )}
               </div>
               
               {packageTransactions.filter(t => t.transaction_type === 'inpatient_revenue').length > 0 ? (
@@ -495,6 +511,7 @@ export function PatientDetailModal({
                             <TableCell>{formatDate(t.transaction_date)}</TableCell>
                             <TableCell className="text-right font-semibold">{t.amount.toLocaleString()}원</TableCell>
                             <TableCell className="text-right">
+                              {!detailReadOnly && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -506,6 +523,7 @@ export function PatientDetailModal({
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -523,6 +541,7 @@ export function PatientDetailModal({
             <div className="space-y-4 pt-6 border-t">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">외래 매출 관리</h3>
+                {!detailReadOnly && (
                 <Button
                   size="sm"
                   variant="destructive"
@@ -533,6 +552,7 @@ export function PatientDetailModal({
                   <Trash2 className="h-4 w-4" />
                   데이터 삭제
                 </Button>
+                )}
               </div>
               
               {packageTransactions.filter(t => t.transaction_type === 'outpatient_revenue').length > 0 ? (
@@ -554,6 +574,7 @@ export function PatientDetailModal({
                             <TableCell>{formatDate(t.transaction_date)}</TableCell>
                             <TableCell className="text-right font-semibold">{t.amount.toLocaleString()}원</TableCell>
                             <TableCell className="text-right">
+                              {!detailReadOnly && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -565,6 +586,7 @@ export function PatientDetailModal({
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -593,6 +615,12 @@ export function PatientDetailModal({
             {selectedPatientDetail?.name} - {viewMode === 'full' ? '환자 상세정보' : '패키지 관리'}
           </DialogTitle>
         </DialogHeader>
+
+        {detailReadOnly && (
+          <div className="rounded-md border border-border bg-muted px-4 py-3 text-base font-semibold text-muted-foreground">
+            읽기 전용 · 담당 {selectedPatientDetail?.manager_name || '-'}
+          </div>
+        )}
         
         {viewMode === 'treatment-only' ? (
           <div className="mt-4">
@@ -1009,6 +1037,7 @@ export function PatientDetailModal({
                 </div>
               </div>
               
+              {!detailReadOnly && (
               <div className="flex justify-end gap-2 pt-4">
                 <Button 
                   onClick={saveAllEditingFields}
@@ -1017,6 +1046,7 @@ export function PatientDetailModal({
                   수정 저장
                 </Button>
               </div>
+              )}
             </div>
 
             {/* 패키지 관리 섹션 */}

@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
+import { useCrossView } from "@/hooks/useCrossView";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -160,6 +162,14 @@ export default function PatientListManagement() {
   
   const { toast } = useToast();
   const { userRole } = useAuth();
+  const { userId, isMaster, hasCrossView, canEditManager } = useCrossView();
+  // 교차 열람 범위: 'mine'(기본) | 'all'
+  const [viewScope, setViewScope] = useState<'mine' | 'all'>('mine');
+  // 교차 열람 권한이 사라지면(is_active=false) 자동으로 '내 환자'로 복귀
+  useEffect(() => {
+    if (!hasCrossView) setViewScope('mine');
+  }, [hasCrossView]);
+  const detailReadOnly = !!selectedPatientDetail && !canEditManager(selectedPatientDetail.assigned_manager);
 
   useEffect(() => {
     fetchPatients();
@@ -226,6 +236,11 @@ export default function PatientListManagement() {
   useEffect(() => {
     // 기존 검색 + 필터 로직 통합
     const filtered = patients.filter(patient => {
+      // 교차 열람 범위 필터 ('내 환자' 기본값)
+      if (!isMaster && viewScope === 'mine' && userId) {
+        if (patient.assigned_manager && patient.assigned_manager !== userId) return false;
+      }
+
       // 기존 검색 필터
       if (searchTerm.trim()) {
         const search = searchTerm.toLowerCase();
@@ -285,7 +300,7 @@ export default function PatientListManagement() {
       return true;
     });
     setFilteredPatients(filtered);
-  }, [patients, searchTerm, inflowDateStart, inflowDateEnd, selectedVisitTypes, selectedDiagnoses, selectedMonth, selectedManagementStatuses]);
+  }, [patients, searchTerm, inflowDateStart, inflowDateEnd, selectedVisitTypes, selectedDiagnoses, selectedMonth, selectedManagementStatuses, viewScope, isMaster, userId]);
 
   // 환자 데이터에서 사용 가능한 월 목록 추출
   const availableMonths = useMemo(() => {
@@ -1417,6 +1432,16 @@ export default function PatientListManagement() {
   const saveAllEditingFields = async () => {
     if (!selectedPatientDetail || Object.keys(editingFields).length === 0) return;
 
+    // 교차 열람(읽기 전용) 환자는 수정 불가
+    if (!canEditManager(selectedPatientDetail.assigned_manager)) {
+      toast({
+        title: "읽기 전용",
+        description: "다른 담당자의 환자 정보는 수정할 수 없습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // 관리자 권한 체크
     if (userRole === 'admin') {
       toast({
@@ -1671,6 +1696,7 @@ export default function PatientListManagement() {
             <h3 className="text-lg font-semibold">패키지 관리</h3>
           </div>
           <div className="flex gap-2">
+            {detailReadOnly ? null : (<>
             <Button
               onClick={handleSyncPackage}
               disabled={syncingPackage || !selectedPatientDetail?.customer_number}
@@ -1688,6 +1714,7 @@ export default function PatientListManagement() {
             >
               내역삭제
             </Button>
+            </>)}
           </div>
         </div>
 
@@ -1799,6 +1826,7 @@ export default function PatientListManagement() {
               <FileSpreadsheet className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold">입원 매출 관리</h3>
             </div>
+            {!detailReadOnly && (
             <Button
               size="sm"
               variant="destructive"
@@ -1809,6 +1837,7 @@ export default function PatientListManagement() {
               <Trash2 className="h-4 w-4" />
               데이터 삭제
             </Button>
+            )}
           </div>
           
           {packageTransactions.filter(t => t.transaction_type === 'inpatient_revenue').length > 0 ? (
@@ -1838,6 +1867,7 @@ export default function PatientListManagement() {
                           <TableCell>{new Date(t.transaction_date).toLocaleDateString('ko-KR')}</TableCell>
                           <TableCell className="text-right font-semibold">{t.amount.toLocaleString()}원</TableCell>
                           <TableCell className="text-right">
+                            {!detailReadOnly && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1849,6 +1879,7 @@ export default function PatientListManagement() {
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1884,6 +1915,7 @@ export default function PatientListManagement() {
               <FileSpreadsheet className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold">외래 매출 관리</h3>
             </div>
+            {!detailReadOnly && (
             <Button
               size="sm"
               variant="destructive"
@@ -1894,6 +1926,7 @@ export default function PatientListManagement() {
               <Trash2 className="h-4 w-4" />
               데이터 삭제
             </Button>
+            )}
           </div>
           
           {packageTransactions.filter(t => t.transaction_type === 'outpatient_revenue').length > 0 ? (
@@ -1923,6 +1956,7 @@ export default function PatientListManagement() {
                           <TableCell>{new Date(t.transaction_date).toLocaleDateString('ko-KR')}</TableCell>
                           <TableCell className="text-right font-semibold">{t.amount.toLocaleString()}원</TableCell>
                           <TableCell className="text-right">
+                            {!detailReadOnly && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1934,6 +1968,7 @@ export default function PatientListManagement() {
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1981,6 +2016,18 @@ export default function PatientListManagement() {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <CardTitle>유입 환자 목록 ({filteredPatients.length}명)</CardTitle>
+              {hasCrossView && (
+                <ToggleGroup
+                  type="single"
+                  size="sm"
+                  variant="outline"
+                  value={viewScope}
+                  onValueChange={(v) => v && setViewScope(v as 'mine' | 'all')}
+                >
+                  <ToggleGroupItem value="mine" aria-label="내 환자">내 환자</ToggleGroupItem>
+                  <ToggleGroupItem value="all" aria-label="전체">전체</ToggleGroupItem>
+                </ToggleGroup>
+              )}
               <MonthFilter
                 selectedMonth={selectedMonth}
                 onMonthChange={setSelectedMonth}
@@ -2063,10 +2110,11 @@ export default function PatientListManagement() {
                 {filteredPatients.map((patient) => {
                   const bgColor = getManagementStatusBgColor((patient as any).management_status);
                   const isOut = isExcludedFromTracking((patient as any).management_status);
+                  const isOthers = !canEditManager(patient.assigned_manager);
                   return (
                     <TableRow 
                       key={patient.id}
-                      className={`cursor-pointer hover:bg-muted/50 ${bgColor} ${isOut ? 'italic' : ''}`}
+                      className={`cursor-pointer hover:bg-muted/50 ${bgColor} ${isOut ? 'italic' : ''} ${isOthers ? 'opacity-80' : ''}`}
                       onClick={() => {
                         setSelectedPatientDetail(patient);
                         setViewMode('full');
@@ -2088,7 +2136,13 @@ export default function PatientListManagement() {
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-[10px] text-muted-foreground/30">담당</span>
-                        <span className="whitespace-nowrap">{patient.manager_name || '-'}</span>
+                        {isOthers ? (
+                          <Badge variant="secondary" className="w-fit whitespace-nowrap text-muted-foreground font-normal">
+                            {patient.manager_name || '-'} · 읽기전용
+                          </Badge>
+                        ) : (
+                          <span className="whitespace-nowrap">{patient.manager_name || '-'}</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -2210,6 +2264,13 @@ export default function PatientListManagement() {
               {selectedPatientDetail?.name} - {viewMode === 'full' ? '환자 상세정보' : '패키지 관리'}
             </DialogTitle>
           </DialogHeader>
+
+          {detailReadOnly && (
+            <div className="rounded-md border border-border bg-muted px-4 py-3 text-base font-semibold text-muted-foreground">
+              읽기 전용 · 담당 {selectedPatientDetail?.manager_name || '-'}
+            </div>
+          )}
+          
           
           {viewMode === 'treatment-only' ? (
             <div className="mt-4">
@@ -2800,14 +2861,16 @@ export default function PatientListManagement() {
                   </div>
                 </div>
                 
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button 
-                    onClick={saveAllEditingFields}
-                    disabled={Object.keys(editingFields).length === 0 || userRole === 'admin'}
-                  >
-                    수정 저장
-                  </Button>
-                </div>
+                {!detailReadOnly && (
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button 
+                      onClick={saveAllEditingFields}
+                      disabled={Object.keys(editingFields).length === 0 || userRole === 'admin'}
+                    >
+                      수정 저장
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* 패키지 관리 섹션 */}
