@@ -128,6 +128,7 @@ export function DailyStatusGrid({
   
   // 교차 열람(읽기 전용) 권한
   const { canEditManager } = useCrossView();
+  const detailReadOnly = !!selectedPatientDetail && !canEditManager(selectedPatientDetail.assigned_manager);
 
   // localStorage에서 스크롤 위치 복원
   const scrollStorageKey = `daily-tracking-scroll-${yearMonth}`;
@@ -696,6 +697,7 @@ export function DailyStatusGrid({
 
   const saveAllEditingFields = async () => {
     if (!selectedPatientDetail || Object.keys(editingFields).length === 0) return;
+    if (!canEditManager(selectedPatientDetail.assigned_manager)) return;
 
     try {
       const { error } = await supabase
@@ -1712,6 +1714,12 @@ export function DailyStatusGrid({
               {selectedPatientDetail?.name} - 환자 상세정보
             </DialogTitle>
           </DialogHeader>
+
+          {detailReadOnly && (
+            <div className="rounded-md border border-border bg-muted px-4 py-3 text-base font-semibold text-muted-foreground">
+              읽기 전용 · 담당 {selectedPatientDetail?.manager_name || '-'}
+            </div>
+          )}
           
           {selectedPatientDetail && (
             <div className="space-y-6 mt-4">
@@ -2294,6 +2302,7 @@ export function DailyStatusGrid({
                   </div>
                 </div>
                 
+                {!detailReadOnly && (
                 <div className="flex justify-end gap-2 pt-4">
                   <Button 
                     onClick={saveAllEditingFields}
@@ -2302,6 +2311,7 @@ export function DailyStatusGrid({
                     수정 저장
                   </Button>
                 </div>
+                )}
               </div>
 
               {/* 패키지 관리 섹션 */}
