@@ -300,7 +300,7 @@ export default function PatientListManagement() {
       return true;
     });
     setFilteredPatients(filtered);
-  }, [patients, searchTerm, inflowDateStart, inflowDateEnd, selectedVisitTypes, selectedDiagnoses, selectedMonth, selectedManagementStatuses]);
+  }, [patients, searchTerm, inflowDateStart, inflowDateEnd, selectedVisitTypes, selectedDiagnoses, selectedMonth, selectedManagementStatuses, viewScope, isMaster, userId]);
 
   // 환자 데이터에서 사용 가능한 월 목록 추출
   const availableMonths = useMemo(() => {
