@@ -2246,7 +2246,7 @@ export default function PatientListManagement() {
           </DialogHeader>
 
           {detailReadOnly && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-base font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+            <div className="rounded-md border border-border bg-muted px-4 py-3 text-base font-semibold text-muted-foreground">
               읽기 전용 · 담당 {selectedPatientDetail?.manager_name || '-'}
             </div>
           )}
