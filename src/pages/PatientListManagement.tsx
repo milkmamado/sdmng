@@ -1432,6 +1432,16 @@ export default function PatientListManagement() {
   const saveAllEditingFields = async () => {
     if (!selectedPatientDetail || Object.keys(editingFields).length === 0) return;
 
+    // 교차 열람(읽기 전용) 환자는 수정 불가
+    if (!canEditManager(selectedPatientDetail.assigned_manager)) {
+      toast({
+        title: "읽기 전용",
+        description: "다른 담당자의 환자 정보는 수정할 수 없습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // 관리자 권한 체크
     if (userRole === 'admin') {
       toast({
