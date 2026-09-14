@@ -2244,6 +2244,13 @@ export default function PatientListManagement() {
               {selectedPatientDetail?.name} - {viewMode === 'full' ? '환자 상세정보' : '패키지 관리'}
             </DialogTitle>
           </DialogHeader>
+
+          {detailReadOnly && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-base font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+              읽기 전용 · 담당 {selectedPatientDetail?.manager_name || '-'}
+            </div>
+          )}
+          
           
           {viewMode === 'treatment-only' ? (
             <div className="mt-4">
