@@ -1686,6 +1686,7 @@ export default function PatientListManagement() {
             <h3 className="text-lg font-semibold">패키지 관리</h3>
           </div>
           <div className="flex gap-2">
+            {detailReadOnly ? null : (<>
             <Button
               onClick={handleSyncPackage}
               disabled={syncingPackage || !selectedPatientDetail?.customer_number}
