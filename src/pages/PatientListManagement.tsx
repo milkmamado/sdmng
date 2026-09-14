@@ -162,6 +162,14 @@ export default function PatientListManagement() {
   
   const { toast } = useToast();
   const { userRole } = useAuth();
+  const { userId, isMaster, hasCrossView, canEditManager } = useCrossView();
+  // 교차 열람 범위: 'mine'(기본) | 'all'
+  const [viewScope, setViewScope] = useState<'mine' | 'all'>('mine');
+  // 교차 열람 권한이 사라지면(is_active=false) 자동으로 '내 환자'로 복귀
+  useEffect(() => {
+    if (!hasCrossView) setViewScope('mine');
+  }, [hasCrossView]);
+  const detailReadOnly = !!selectedPatientDetail && !canEditManager(selectedPatientDetail.assigned_manager);
 
   useEffect(() => {
     fetchPatients();
