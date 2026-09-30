@@ -19,6 +19,7 @@ import { DateRangeFilter } from "@/components/TableFilters/DateRangeFilter";
 import { InflowStatusFilter } from "@/components/TableFilters/InflowStatusFilter";
 import { VisitTypeFilter } from "@/components/TableFilters/VisitTypeFilter";
 import { DiagnosisFilter } from "@/components/TableFilters/DiagnosisFilter";
+import { CrmRecord, decodeHashPayload, diffPatient, describeChange, normalizeName, crmValues } from "@/lib/crmSync";
 
 interface Patient {
   id: string;
@@ -181,6 +182,69 @@ export default function FirstVisitManagement() {
       supabase.removeChannel(channel);
     };
   }, [currentBranch]); // currentBranch 의존성 추가
+
+  // CRM에서 바로 보내기 (#crm_import=)
+  useEffect(() => {
+    const hash = window.location.hash || '';
+    if (!hash.startsWith('#crm_import=')) return;
+    const encoded = hash.substring('#crm_import='.length);
+    // 해시는 즉시 제거
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    let rec: CrmRecord;
+    try {
+      rec = decodeHashPayload(encoded);
+    } catch (e) {
+      console.error('CRM import 데이터 파싱 실패:', e);
+      toast({ title: '오류', description: 'CRM 데이터를 읽지 못했습니다.', variant: 'destructive' });
+      return;
+    }
+    if (!rec?.ok || !rec.clntNo || !rec.base) return;
+
+    (async () => {
+      let query = supabase.from('patients').select('*').eq('customer_number', String(rec.clntNo).trim());
+      query = applyBranchFilter(query);
+      const { data: existing, error } = await query.limit(1);
+      if (error) {
+        console.error('CRM import 환자 조회 실패:', error);
+        return;
+      }
+      const found = existing?.[0];
+      if (found) {
+        if (normalizeName(found.name) !== normalizeName(rec.base.clntNm)) {
+          toast({
+            title: '이름 불일치',
+            description: `사이트: ${found.name} / CRM: ${rec.base.clntNm || '-'} — 변경하지 않았습니다.`,
+            variant: 'destructive',
+          });
+          return;
+        }
+        const changes = diffPatient(found, rec);
+        setSelectedPatientDetail({ ...found, ...changes });
+        toast({
+          title: '기존 환자 — 변경된 항목을 확인 후 저장하세요',
+          description: Object.keys(changes).length
+            ? Object.entries(changes).map(([k, v]) => describeChange(k, found[k], v)).join(' · ')
+            : '변경된 항목이 없습니다.',
+        });
+        return;
+      }
+      const vals = crmValues(rec);
+      const b = rec.base;
+      const data: any = {
+        name: b.clntNm || '',
+        customer_number: String(rec.clntNo),
+        gender: b.sex || '',
+        address: b.upAddr || '',
+      };
+      if (vals.phone) data.phone = vals.phone;
+      if (vals.age !== undefined) data.age = String(vals.age);
+      ['special_note_1', 'special_note_2', 'treatment_memo_1', 'treatment_memo_2', 'counseling_content'].forEach((k) => {
+        if (vals[k]) data[k] = vals[k];
+      });
+      handleProceedToRegistration(data);
+      toast({ title: 'CRM 데이터 가져오기 성공', description: `${data.name} 환자 정보를 불러왔습니다.`, duration: 1500 });
+    })();
+  }, [currentBranch]);
 
   const fetchPatients = async () => {
     setLoading(true);
