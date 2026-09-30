@@ -928,16 +928,16 @@ export default function StatisticsManagement() {
         managedPatientsResult,
         missingInflowResult
       ] = await Promise.all([
-        outStatusQuery,
-        outThisMonthQuery,
-        inflowQuery,
-        phoneConsultQuery,
-        visitConsultQuery,
-        failedQuery,
-        treatmentCompletedQuery,
-        prevMonthQuery,
-        managedPatientsQuery,
-        missingInflowQuery
+        fetchAllQuery(outStatusQuery),
+        fetchAllQuery(outThisMonthQuery),
+        fetchAllQuery(inflowQuery),
+        fetchAllQuery(phoneConsultQuery),
+        fetchAllQuery(visitConsultQuery),
+        fetchAllQuery(failedQuery),
+        fetchAllQuery(treatmentCompletedQuery),
+        fetchAllQuery(prevMonthQuery),
+        fetchAllQuery(managedPatientsQuery),
+        fetchAllQuery(missingInflowQuery)
       ]);
 
       // ===== 데이터 처리 (기존 로직 100% 동일) =====
