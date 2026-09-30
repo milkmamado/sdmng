@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -166,7 +166,7 @@ export default function RiskManagement() {
         patientsQuery = patientsQuery.eq("assigned_manager", targetManager);
       }
 
-      const { data: patientsData, error: patientsError } = await patientsQuery;
+      const { data: patientsData, error: patientsError } = await fetchAllQuery(patientsQuery);
       if (patientsError) throw patientsError;
 
       const { data: statusData, error: statusError } = await fetchAllRows((from, to) => supabase

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllQuery } from '@/lib/fetchAllRows';
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -176,10 +177,10 @@ export default function RevenueBulkManagement() {
       }
 
       // 모든 환자 조회 (현재 지점)
-      const { data: allPatients, error: patientsError } = await supabase
+      const { data: allPatients, error: patientsError } = await fetchAllQuery(supabase
         .from('patients')
         .select('id, customer_number, name')
-        .eq('branch', currentBranch);
+        .eq('branch', currentBranch));
 
       if (patientsError) throw patientsError;
 
