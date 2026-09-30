@@ -50,6 +50,7 @@ const getAdminItems = (branch: string) => [
   { title: "미분류 환자 리스트", url: `/${branch}/unclassified-patients`, icon: AlertTriangle },
   { title: "입원/외래매출 관리", url: `/${branch}/revenue-bulk-management`, icon: FileSpreadsheet, requiredRole: 'master' as const },
   { title: "계정 관리", url: `/${branch}/account-management`, icon: Shield, requiredRole: 'master' as const },
+  { title: "진단·병원 목록 관리", url: `/${branch}/classification-options`, icon: ListTree, requiredRole: 'master' as const },
 ];
 
 export function AppSidebar() {
