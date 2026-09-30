@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -278,7 +278,7 @@ export default function StatisticsManagement() {
       // 지점 필터 적용
       monthNewPatientsQuery = applyBranchFilter(monthNewPatientsQuery);
 
-      const { data: allMonthPatients, error: monthPatientsError } = await monthNewPatientsQuery;
+      const { data: allMonthPatients, error: monthPatientsError } = await fetchAllQuery(monthNewPatientsQuery);
 
       if (monthPatientsError) throw monthPatientsError;
 
@@ -340,7 +340,7 @@ export default function StatisticsManagement() {
       
       totalPatientsQuery = applyBranchFilter(totalPatientsQuery);
       
-      const { data: totalPatientsData } = await totalPatientsQuery;
+      const { data: totalPatientsData } = await fetchAllQuery(totalPatientsQuery);
       
       // 선택한 월에 유입된 환자만 필터링 (11월 관리 환자)
       const totalPatientsFiltered = totalPatientsData?.filter(p => {
@@ -364,15 +364,15 @@ export default function StatisticsManagement() {
         managerAllPatientsQuery = managerAllPatientsQuery.eq('assigned_manager', targetManager);
       }
       managerAllPatientsQuery = applyBranchFilter(managerAllPatientsQuery);
-      const { data: managerAllPatients } = await managerAllPatientsQuery;
+      const { data: managerAllPatients } = await fetchAllQuery(managerAllPatientsQuery);
 
       // 해당 기간의 실제 결제 데이터 가져오기
-      const { data: payments, error: paymentsError } = await supabase
+      const { data: payments, error: paymentsError } = await fetchAllQuery(supabase
         .from('treatment_plans')
         .select('treatment_amount, payment_date, is_paid, patient_id')
         .eq('is_paid', true)
         .gte('payment_date', queryStartDate)
-        .lte('payment_date', queryEndDate);
+        .lte('payment_date', queryEndDate));
 
       if (paymentsError) throw paymentsError;
 
