@@ -125,8 +125,9 @@ export function encodeHashPayload(obj: any): string {
 // ---------- 입원정보 → 일별 환자 상태 ----------
 export const ADMS_SYNC_START = '2026-05-01';
 export const ADMISSION_TYPES = ['입원', '재원', '퇴원'] as const;
-export type AdmissionType = '입원' | '재원' | '퇴원';
-const ADM_PRIORITY: Record<AdmissionType, number> = { 입원: 3, 재원: 2, 퇴원: 1 };
+export type AdmissionType = '입원' | '재원' | '퇴원' | '낮병동';
+// 당일 입퇴원(낮병동)은 같은 날 다른 입원 기록과 겹치면 항상 짐
+const ADM_PRIORITY: Record<AdmissionType, number> = { 입원: 3, 재원: 2, 퇴원: 1, 낮병동: 0 };
 
 const fmtLocal = (dt: Date) =>
   `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
@@ -183,10 +184,15 @@ export function buildAdmissionDays(adms: CrmAdmsRow[] | null | undefined, today:
     } else if (r.d && r.d >= r.a && r.d <= today) {
       // 진행 중이 아닌데 퇴원일이 있으면(빈 값·알 수 없는 값 포함) 퇴원된 것으로 처리
       discharged = true;
-      put(r.a, '입원');
-      const stayEnd = addDaysStr(r.d, -1);
-      for (let x = addDaysStr(r.a, 1); x <= stayEnd && x <= today; x = addDaysStr(x, 1)) put(x, '재원');
-      if (r.d > r.a) put(r.d, '퇴원');
+      if (r.d === r.a) {
+        // 당일 입퇴원: 그날은 '낮병동' 한 칸만 (입원 칸을 넣지 않음)
+        put(r.a, '낮병동');
+      } else {
+        put(r.a, '입원');
+        const stayEnd = addDaysStr(r.d, -1);
+        for (let x = addDaysStr(r.a, 1); x <= stayEnd && x <= today; x = addDaysStr(x, 1)) put(x, '재원');
+        put(r.d, '퇴원');
+      }
     } else {
       // 퇴원일이 없거나 미래 + 진행 중 아님 → 신뢰 불가, 아무것도 넣지 않음
       unclearRows.push({ admsDate: r.a, admsYn: r.yn });
