@@ -13,7 +13,7 @@ import {
   ADMS_SYNC_START, buildAdmissionDays, diffDailyStatus, localToday, mdLabel, DailyDiff, addDaysStr,
   buildPackagePlan, PackagePlan, PKG_TX_TYPES,
 } from '@/lib/crmSync';
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const SELECT_COLS =
@@ -97,7 +97,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
     reset();
     let query = supabase.from('patients').select(SELECT_COLS).not('customer_number', 'is', null);
     query = applyBranchFilter(query);
-    const { data, error } = await query;
+    const { data, error } = await fetchAllQuery<any>(query);
     if (error) {
       toast({ title: '오류', description: '환자 목록을 불러오지 못했습니다.', variant: 'destructive' });
       return;
@@ -133,6 +133,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
           .gte('status_date', ADMS_SYNC_START)
           .order('status_date', { ascending: true })
           .order('patient_id', { ascending: true })
+          .order('id', { ascending: true })
           .range(from, from + PAGE - 1);
         if (error) throw error;
         for (const r of data || []) {
