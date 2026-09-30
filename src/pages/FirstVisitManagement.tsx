@@ -73,6 +73,12 @@ export default function FirstVisitManagement() {
   const [selectedInflowStatuses, setSelectedInflowStatuses] = useState<string[]>([]);
   const [selectedVisitTypes, setSelectedVisitTypes] = useState<string[]>([]);
   const [selectedDiagnoses, setSelectedDiagnoses] = useState<string[]>([]);
+  const [showNeedsReviewOnly, setShowNeedsReviewOnly] = useState(false);
+
+  // 진단·병원 확인 필요 인원 수
+  const needsReviewCount = patients.filter(
+    (p) => p.diagnosis_needs_review || p.hospital_needs_review || !p.diagnosis_category
+  ).length;
   
   const { toast } = useToast();
   const { userRole } = useAuth();
