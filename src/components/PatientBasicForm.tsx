@@ -16,6 +16,8 @@ import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
+import { ClassificationSection } from '@/components/ClassificationSection';
+import { callClassifyPatient } from '@/lib/classifyPatient';
 
 interface PatientBasicFormProps {
   patient?: any;
@@ -75,6 +77,28 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
   const [syncing, setSyncing] = useState(false);
   const [syncingPhone, setSyncingPhone] = useState(false);
   const { toast } = useToast();
+  // 진단명·이전병원 분류 메타 (폼에서 수동 변경/확인 시 갱신)
+  const [classMeta, setClassMeta] = useState({
+    diagnosis_source: null as string | null,
+    diagnosis_needs_review: false,
+    diagnosis_raw: null as string | null,
+    hospital_source: null as string | null,
+    hospital_needs_review: false,
+    hospital_raw: null as string | null,
+  });
+  // 사용자가 진단·병원 영역을 건드렸는지 추적 (안 건드렸으면 저장 시 기존 값 유지)
+  const [classTouched, setClassTouched] = useState({ diagnosis: false, hospital: false });
+
+  const handleClassFieldChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleClassManualChange = (kind: 'diagnosis' | 'hospital') => {
+    setClassTouched(prev => ({ ...prev, [kind]: true }));
+    setClassMeta(prev => kind === 'diagnosis'
+      ? { ...prev, diagnosis_source: 'manual', diagnosis_needs_review: false }
+      : { ...prev, hospital_source: 'manual', hospital_needs_review: false });
+  };
 
   useEffect(() => {
     fetchOptions();
@@ -137,6 +161,17 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         consultation_date: patient.consultation_date || '',
         memo1: patient.memo1 || ''
       });
+
+      setClassMeta({
+        diagnosis_source: patient.diagnosis_source || null,
+        diagnosis_needs_review: !!patient.diagnosis_needs_review,
+        diagnosis_raw: patient.diagnosis_raw || null,
+        hospital_source: patient.hospital_source || null,
+        hospital_needs_review: !!patient.hospital_needs_review,
+        hospital_raw: patient.hospital_raw || null,
+      });
+      setClassTouched({ diagnosis: false, hospital: false });
+
       
       // manager_name이 없으면 현재 사용자 이름 가져오기
       if (!patient.manager_name) {
@@ -145,9 +180,11 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
     } else if (initialData) {
       // 조회 다이얼로그에서 넘어온 초기 데이터 설정
       fetchCurrentUserName();
+      // CRM에서 넘어오는 진단명·이전병원 4개 필드는 무시 (자동 분류가 담당)
+      const { diagnosis_category, diagnosis_detail, hospital_category, hospital_branch, ...restInitial } = initialData;
       setFormData(prev => ({
         ...prev,
-        ...initialData,
+        ...restInitial,
         // manager_name은 현재 사용자로 덮어쓰기 위해 제외
         manager_name: prev.manager_name
       }));
@@ -396,17 +433,20 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
       // 변경된 필드만 추출
       const updatedFields: any = {};
       const apiFields = [
-        'name', 'customer_number', 'resident_number_masked', 'phone', 
-        'gender', 'age', 'visit_motivation', 
-        'diagnosis_category', 'diagnosis_detail', 'hospital_category', 'hospital_branch', 
-        'address', 'crm_memo', 'counseling_content', 'special_note_1', 'special_note_2', 
+        'name', 'customer_number', 'resident_number_masked', 'phone',
+        'gender', 'age', 'visit_motivation',
+        'address', 'crm_memo', 'counseling_content', 'special_note_1', 'special_note_2',
         'treatment_memo_1', 'treatment_memo_2'
       ];
+      // 진단명·이전병원 4개 필드는 자동 분류가 담당하므로 최신화 대상에서 제외
 
       apiFields.forEach(field => {
         const crmValue = crmData[field];
         const currentValue = patient[field as keyof typeof patient];
-        
+
+        // CRM 값이 빈 문자열이면 기존 값 유지 (빈 값으로 덮어쓰지 않음)
+        if (typeof crmValue === 'string' && crmValue.trim() === '') return;
+
         // 값이 다르면 업데이트 대상에 추가
         if (crmValue !== undefined && crmValue !== null && crmValue !== currentValue) {
           if (field === 'age' && crmValue) {
@@ -445,6 +485,11 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         description: `${Object.keys(updatedFields).length}개 필드가 업데이트되었습니다.`,
         duration: 2000,
       });
+
+      // 상담내용이 바뀌었으면 자동 분류 호출 (fire-and-forget, 저장 흐름 차단 안 함)
+      if (updatedFields.counseling_content !== undefined) {
+        callClassifyPatient([patient.id]);
+      }
 
     } catch (error) {
       console.error('Error updating patient data:', error);
@@ -511,11 +556,7 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         gender: formData.gender || null,
         age: formData.age ? parseInt(formData.age) : null,
         visit_motivation: formData.visit_motivation || null,
-        
-        diagnosis_category: formData.diagnosis_category || null,
-        diagnosis_detail: formData.diagnosis_detail || null,
-        hospital_category: formData.hospital_category || null,
-        hospital_branch: formData.hospital_branch || null,
+
         address: formData.address || null,
         crm_memo: formData.crm_memo || null,
         counseling_content: formData.counseling_content || null,
@@ -541,6 +582,25 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         branch: currentBranch // 현재 지점 정보 추가
       };
 
+      // 진단명·이전병원: 사용자가 해당 영역을 건드린 경우에만 payload에 포함
+      // (안 건드렸으면 기존 값·source 그대로 유지)
+      if (!patient || classTouched.diagnosis) {
+        patientData.diagnosis_category = formData.diagnosis_category || null;
+        patientData.diagnosis_detail = formData.diagnosis_detail || null;
+        if (classTouched.diagnosis) {
+          patientData.diagnosis_source = 'manual';
+          patientData.diagnosis_needs_review = false;
+        }
+      }
+      if (!patient || classTouched.hospital) {
+        patientData.hospital_category = formData.hospital_category || null;
+        patientData.hospital_branch = formData.hospital_branch || null;
+        if (classTouched.hospital) {
+          patientData.hospital_source = 'manual';
+          patientData.hospital_needs_review = false;
+        }
+      }
+
       if (patient) {
         const { error } = await supabase
           .from('patients')
@@ -554,7 +614,10 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
           description: "환자 정보가 저장되었습니다.",
           duration: 1500,
         });
-        
+
+        // 저장 성공 직후 자동 분류 (fire-and-forget, 저장 흐름 차단 안 함)
+        callClassifyPatient([patient.id]);
+
         // 저장 후 모달 닫기
         onClose();
       } else {
@@ -584,7 +647,10 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
           description: "새 환자가 등록되었습니다.",
           duration: 1500,
         });
-        
+
+        // 저장 성공 직후 자동 분류 (fire-and-forget, 저장 흐름 차단 안 함)
+        if (newPatient?.id) callClassifyPatient([newPatient.id]);
+
         // 저장 후 모달 닫기
         onClose();
       }
@@ -779,58 +845,6 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
             />
           </div>
 
-          {/* 진단명 */}
-          <div>
-            <Label htmlFor="diagnosis_category">진단명</Label>
-            <Input
-              id="diagnosis_category"
-              name="diagnosis_category"
-              value={formData.diagnosis_category}
-              placeholder="API에서 자동 입력"
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
-          {/* 진단명 중분류 */}
-          <div>
-            <Label htmlFor="diagnosis_detail">진단명 (중분류)</Label>
-            <Input
-              id="diagnosis_detail"
-              name="diagnosis_detail"
-              value={formData.diagnosis_detail}
-              placeholder="API에서 자동 입력"
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
-          {/* 이전병원 대분류 */}
-          <div>
-            <Label htmlFor="hospital_category">이전병원 (대분류)</Label>
-            <Input
-              id="hospital_category"
-              name="hospital_category"
-              value={formData.hospital_category}
-              placeholder="API에서 자동 입력"
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
-          {/* 이전병원 중분류 */}
-          <div>
-            <Label htmlFor="hospital_branch">이전병원 (중분류)</Label>
-            <Input
-              id="hospital_branch"
-              name="hospital_branch"
-              value={formData.hospital_branch}
-              placeholder="API에서 자동 입력"
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
           {/* 주소 */}
           <div className="md:col-span-2 lg:col-span-3">
             <Label htmlFor="address">주소</Label>
@@ -936,6 +950,23 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
           </div>
         </div>
       </div>
+
+      {/* 진단명 · 이전병원 섹션 (자동 분류 + 수동 수정) */}
+      <ClassificationSection
+        patient={patient}
+        diagnosisCategory={formData.diagnosis_category}
+        diagnosisDetail={formData.diagnosis_detail}
+        hospitalCategory={formData.hospital_category}
+        hospitalBranch={formData.hospital_branch}
+        onFieldChange={handleClassFieldChange}
+        onManualChange={handleClassManualChange}
+        dxSource={classMeta.diagnosis_source}
+        dxNeedsReview={classMeta.diagnosis_needs_review}
+        dxRaw={classMeta.diagnosis_raw}
+        hsSource={classMeta.hospital_source}
+        hsNeedsReview={classMeta.hospital_needs_review}
+        hsRaw={classMeta.hospital_raw}
+      />
 
       {/* 수동 입력 정보 섹션 */}
       <div className="space-y-4">

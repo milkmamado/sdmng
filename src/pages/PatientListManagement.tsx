@@ -157,6 +157,7 @@ export default function PatientListManagement() {
   const [inflowDateEnd, setInflowDateEnd] = useState<Date | undefined>();
   const [selectedVisitTypes, setSelectedVisitTypes] = useState<string[]>([]);
   const [selectedDiagnoses, setSelectedDiagnoses] = useState<string[]>([]);
+  const [showNeedsReviewOnly, setShowNeedsReviewOnly] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [selectedManagementStatuses, setSelectedManagementStatuses] = useState<string[]>([]);
   
@@ -241,6 +242,12 @@ export default function PatientListManagement() {
         if (patient.assigned_manager && patient.assigned_manager !== userId) return false;
       }
 
+      // 진단·병원 확인 필요만 보기
+      if (showNeedsReviewOnly) {
+        const needsReview = patient.diagnosis_needs_review || patient.hospital_needs_review || !patient.diagnosis_category;
+        if (!needsReview) return false;
+      }
+
       // 기존 검색 필터
       if (searchTerm.trim()) {
         const search = searchTerm.toLowerCase();
@@ -300,7 +307,12 @@ export default function PatientListManagement() {
       return true;
     });
     setFilteredPatients(filtered);
-  }, [patients, searchTerm, inflowDateStart, inflowDateEnd, selectedVisitTypes, selectedDiagnoses, selectedMonth, selectedManagementStatuses, viewScope, isMaster, userId]);
+  }, [patients, searchTerm, inflowDateStart, inflowDateEnd, selectedVisitTypes, selectedDiagnoses, selectedMonth, selectedManagementStatuses, viewScope, isMaster, userId, showNeedsReviewOnly]);
+
+  // 진단·병원 확인 필요 인원 수
+  const needsReviewCount = patients.filter(
+    (p) => p.diagnosis_needs_review || p.hospital_needs_review || !p.diagnosis_category
+  ).length;
 
   // 환자 데이터에서 사용 가능한 월 목록 추출
   const availableMonths = useMemo(() => {
@@ -2028,6 +2040,16 @@ export default function PatientListManagement() {
                   <ToggleGroupItem value="all" aria-label="전체">전체</ToggleGroupItem>
                 </ToggleGroup>
               )}
+              <label className="flex items-center gap-1.5 text-sm cursor-pointer whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={showNeedsReviewOnly}
+                  onChange={(e) => setShowNeedsReviewOnly(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                진단·병원 확인 필요만
+                <span className="text-orange-600 font-medium">({needsReviewCount}명)</span>
+              </label>
               <MonthFilter
                 selectedMonth={selectedMonth}
                 onMonthChange={setSelectedMonth}
@@ -2154,7 +2176,12 @@ export default function PatientListManagement() {
                     <TableCell className="max-w-32">
                       <div className="flex flex-col gap-0.5">
                         <span className="text-[10px] text-muted-foreground/30">진단</span>
-                        <span className="truncate">{patient.diagnosis_category || '-'}</span>
+                        <span className="truncate flex items-center gap-1">
+                          {(patient.diagnosis_needs_review || patient.hospital_needs_review) && (
+                            <span className="inline-block h-2 w-2 rounded-full bg-orange-500 shrink-0" title="확인 필요" />
+                          )}
+                          {patient.diagnosis_category || '-'}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>

@@ -7,6 +7,7 @@ import { Dashboard } from "./components/Dashboard";
 import BranchSelection from "./pages/BranchSelection";
 import BranchAuth from "./pages/BranchAuth";
 import AccountManagement from "./pages/AccountManagement";
+import ClassificationOptions from "./pages/ClassificationOptions";
 import FirstVisitManagement from "./pages/FirstVisitManagement";
 import PatientListManagement from "./pages/PatientListManagement";
 import DailyStatusTracking from "./pages/DailyStatusTracking";
@@ -149,13 +150,21 @@ function AppRoutes() {
             </ProtectedRoute>
           } 
         />
-        <Route 
+        <Route
           path="account-management"
           element={
             <ProtectedRoute requiredRole="master">
               <AccountManagement />
             </ProtectedRoute>
-          } 
+          }
+        />
+        <Route
+          path="classification-options"
+          element={
+            <ProtectedRoute requiredRole="master">
+              <ClassificationOptions />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="unclassified-patients"

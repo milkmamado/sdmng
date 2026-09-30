@@ -143,6 +143,7 @@ export type Database = {
       }
       diagnosis_options: {
         Row: {
+          aliases: string[]
           created_at: string
           created_by: string | null
           id: string
@@ -151,6 +152,7 @@ export type Database = {
           sort_order: number | null
         }
         Insert: {
+          aliases?: string[]
           created_at?: string
           created_by?: string | null
           id?: string
@@ -159,6 +161,7 @@ export type Database = {
           sort_order?: number | null
         }
         Update: {
+          aliases?: string[]
           created_at?: string
           created_by?: string | null
           id?: string
@@ -170,25 +173,31 @@ export type Database = {
       }
       hospital_options: {
         Row: {
+          aliases: string[]
           created_at: string
           created_by: string | null
           id: string
           name: string
           parent_id: string | null
+          sort_order: number | null
         }
         Insert: {
+          aliases?: string[]
           created_at?: string
           created_by?: string | null
           id?: string
           name: string
           parent_id?: string | null
+          sort_order?: number | null
         }
         Update: {
+          aliases?: string[]
           created_at?: string
           created_by?: string | null
           id?: string
           name?: string
           parent_id?: string | null
+          sort_order?: number | null
         }
         Relationships: []
       }
@@ -639,6 +648,9 @@ export type Database = {
           detailed_diagnosis: string | null
           diagnosis_category: string | null
           diagnosis_detail: string | null
+          diagnosis_needs_review: boolean
+          diagnosis_raw: string | null
+          diagnosis_source: string | null
           diet_info: string | null
           discharge_date: string | null
           display_order: number | null
@@ -652,6 +664,9 @@ export type Database = {
           guardian_relationship: string | null
           hospital_branch: string | null
           hospital_category: string | null
+          hospital_needs_review: boolean
+          hospital_raw: string | null
+          hospital_source: string | null
           hospital_treatment: string | null
           id: string
           inflow_date: string | null
@@ -697,6 +712,9 @@ export type Database = {
           detailed_diagnosis?: string | null
           diagnosis_category?: string | null
           diagnosis_detail?: string | null
+          diagnosis_needs_review?: boolean
+          diagnosis_raw?: string | null
+          diagnosis_source?: string | null
           diet_info?: string | null
           discharge_date?: string | null
           display_order?: number | null
@@ -710,6 +728,9 @@ export type Database = {
           guardian_relationship?: string | null
           hospital_branch?: string | null
           hospital_category?: string | null
+          hospital_needs_review?: boolean
+          hospital_raw?: string | null
+          hospital_source?: string | null
           hospital_treatment?: string | null
           id?: string
           inflow_date?: string | null
@@ -755,6 +776,9 @@ export type Database = {
           detailed_diagnosis?: string | null
           diagnosis_category?: string | null
           diagnosis_detail?: string | null
+          diagnosis_needs_review?: boolean
+          diagnosis_raw?: string | null
+          diagnosis_source?: string | null
           diet_info?: string | null
           discharge_date?: string | null
           display_order?: number | null
@@ -768,6 +792,9 @@ export type Database = {
           guardian_relationship?: string | null
           hospital_branch?: string | null
           hospital_category?: string | null
+          hospital_needs_review?: boolean
+          hospital_raw?: string | null
+          hospital_source?: string | null
           hospital_treatment?: string | null
           id?: string
           inflow_date?: string | null
@@ -1034,6 +1061,7 @@ export type Database = {
         Args: { _target: string; _viewer: string }
         Returns: boolean
       }
+      classify_patient_text: { Args: { p_text: string }; Returns: Json }
       get_next_cycle_number: { Args: { patient_uuid: string }; Returns: number }
       has_role:
         | {
@@ -1053,6 +1081,10 @@ export type Database = {
           }
       is_admin_user: { Args: { _user_id: string }; Returns: boolean }
       is_master_user: { Args: { _user_id: string }; Returns: boolean }
+      match_option_by_alias: {
+        Args: { p_kind: string; p_raw: string }
+        Returns: Json
+      }
     }
     Enums: {
       approval_status: "pending" | "approved" | "rejected"
