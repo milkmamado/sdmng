@@ -166,7 +166,7 @@ export default function UserManual() {
               <Home className="w-5 h-5 text-primary" />
               1. 대시보드
             </CardTitle>
-            <CardDescription>전체 환자 현황을 한눈에 확인</CardDescription>
+            <CardDescription>실장 계정의 월별 환자 현황을 한눈에 확인</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
@@ -176,8 +176,8 @@ export default function UserManual() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="border rounded-lg p-3">
-                  <div className="font-medium mb-1">📊 전체 환자</div>
-                  <p className="text-sm text-muted-foreground">시스템에 등록된 총 환자 수</p>
+                  <div className="font-medium mb-1">📊 신규 등록·유입</div>
+                  <p className="text-sm text-muted-foreground">선택 월의 신규 등록과 유입 환자 수</p>
                 </div>
                 <div className="border rounded-lg p-3">
                   <div className="font-medium mb-1">⚠️ 이탈 리스크 환자</div>
@@ -282,7 +282,7 @@ export default function UserManual() {
                 <div className="bg-orange-50 border-l-4 border-orange-500 p-3">
                   <ul className="text-sm space-y-1">
                     <li>• 환자 삭제는 복구할 수 없으니 신중하게 진행하세요</li>
-                    <li>• CRM 연동 북마크(v2)가 설정되어 있어야 합니다 (8. CRM 연동 참고)</li>
+                    <li>• CRM 연동 북마크(v2)가 설정되어 있어야 합니다 (9. CRM 연동 참고)</li>
                     <li>• 중복 등록을 방지하기 위해 등록 전 검색으로 기존 환자 여부를 확인하세요</li>
                   </ul>
                 </div>
@@ -428,6 +428,7 @@ export default function UserManual() {
                       <Badge variant="outline">이대로 확인</Badge> 클릭
                     </li>
                   </ol>
+                  <p className="text-sm text-muted-foreground mt-3">마스터는 「진단·병원 목록 관리」에서 대분류·중분류와 별칭을 관리하고 전체 환자를 재분류할 수 있습니다.</p>
                 </div>
               </div>
 
