@@ -115,12 +115,12 @@ export default function UnclassifiedPatientList() {
       let dailyStatusMap = new Map<string, boolean>();
       
       if (patientIds.length > 0) {
-        const { data: dailyStatusData } = await fetchAllRows((from, to) => supabase
+        const { data: dailyStatusData } = await fetchInChunks(patientIds, (chunk) => fetchAllRows((from, to) => supabase
           .from('daily_patient_status')
           .select('patient_id')
-          .in('patient_id', patientIds)
+          .in('patient_id', chunk)
           .order('id', { ascending: true })
-          .range(from, to));
+          .range(from, to)));
 
         // 일별 활동이 있는 환자 ID 수집
         const patientsWithActivity = new Set((dailyStatusData || []).map(d => d.patient_id));
