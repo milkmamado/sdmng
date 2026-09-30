@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -168,10 +169,12 @@ export default function RiskManagement() {
       const { data: patientsData, error: patientsError } = await patientsQuery;
       if (patientsError) throw patientsError;
 
-      const { data: statusData, error: statusError } = await supabase
+      const { data: statusData, error: statusError } = await fetchAllRows((from, to) => supabase
         .from("daily_patient_status")
         .select("patient_id, status_date")
-        .order("status_date", { ascending: false });
+        .order("status_date", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to));
 
       if (statusError) throw statusError;
 

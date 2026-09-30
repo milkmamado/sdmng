@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Download, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -61,7 +62,7 @@ export function DataMigration() {
         treatmentDetailOptionsRes
       ] = await Promise.all([
         supabase.from('patients').select('*'),
-        supabase.from('daily_patient_status').select('*'),
+        fetchAllRows((from, to) => supabase.from('daily_patient_status').select('*').order('id', { ascending: true }).range(from, to)),
         supabase.from('admission_cycles').select('*'),
         supabase.from('medical_info').select('*'),
         supabase.from('packages').select('*'),

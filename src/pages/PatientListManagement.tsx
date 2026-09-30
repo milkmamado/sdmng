@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useDiagnosisOptions, useHospitalOptions, useInsuranceTypeOptions, useTreatmentDetailOptions, usePatientStatusOptions, useCurrentUserName } from '@/hooks/useOptionsData';
 import { useToast } from "@/hooks/use-toast";
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
@@ -341,10 +342,12 @@ export default function PatientListManagement() {
       if (error) throw error;
       
       // 모든 환자의 일별 상태 데이터 가져오기 (일괄 쿼리 - N+1 문제 해결)
-      const { data: allStatusData } = await supabase
+      const { data: allStatusData } = await fetchAllRows((from, to) => supabase
         .from('daily_patient_status')
         .select('patient_id, status_date, status_type')
-        .order('status_date', { ascending: false });
+        .order('status_date', { ascending: false })
+        .order('id', { ascending: true })
+        .range(from, to));
 
       // 환자별 상태 데이터를 Map으로 그룹화 (메모리에서 처리)
       const statusByPatient = new Map<string, Array<{ status_date: string; status_type: string }>>();

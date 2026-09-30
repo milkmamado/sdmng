@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/components/ui/use-toast";
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
 import { Button } from "@/components/ui/button";
@@ -221,23 +222,29 @@ export default function DailyStatusTracking() {
 
       // 병렬 데이터 페칭: 자동상태체크용 + 월별상태 + 이전달입원상태 + 패키지거래를 동시에 조회
       const [allStatusResult, monthStatusResult, prevMonthAdmissionResult, packageTransactionsResult] = await Promise.all([
-        supabase
+        fetchAllRows((from, to) => supabase
           .from('daily_patient_status')
           .select('patient_id, status_date')
-          .order('status_date', { ascending: false }),
-        supabase
+          .order('status_date', { ascending: false })
+          .order('id', { ascending: true })
+          .range(from, to)),
+        fetchAllRows((from, to) => supabase
           .from('daily_patient_status')
           .select('*')
           .gte('status_date', startDate)
           .lte('status_date', endDate)
-          .order('status_date', { ascending: true }),
+          .order('status_date', { ascending: true })
+          .order('id', { ascending: true })
+          .range(from, to)),
         // 이전 달의 입원/재원/퇴원 기록 가져오기 (월 넘김 핑크색 유지용)
-        supabase
+        fetchAllRows((from, to) => supabase
           .from('daily_patient_status')
           .select('*')
           .lt('status_date', startDate)
           .in('status_type', ['입원', '재원', '퇴원'])
-          .order('status_date', { ascending: true }),
+          .order('status_date', { ascending: true })
+          .order('id', { ascending: true })
+          .range(from, to)),
         supabase
           .from('package_transactions')
           .select('transaction_date, amount, transaction_type')

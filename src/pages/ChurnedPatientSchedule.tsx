@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/components/ui/use-toast";
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
 import { Button } from "@/components/ui/button";
@@ -189,12 +190,14 @@ export default function ChurnedPatientSchedule() {
       const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
       const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
 
-      const { data: fullStatusData, error: fullStatusError } = await supabase
+      const { data: fullStatusData, error: fullStatusError } = await fetchAllRows((from, to) => supabase
         .from('daily_patient_status')
         .select('*')
         .gte('status_date', startDate)
         .lte('status_date', endDate)
-        .order('status_date', { ascending: true });
+        .order('status_date', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to));
 
       if (fullStatusError) throw fullStatusError;
 
