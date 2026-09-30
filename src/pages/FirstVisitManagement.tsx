@@ -347,6 +347,12 @@ export default function FirstVisitManagement() {
 
   // 검색 및 필터링
   const filteredPatients = patients.filter((patient) => {
+    // 진단·병원 확인 필요만 보기
+    if (showNeedsReviewOnly) {
+      const needsReview = patient.diagnosis_needs_review || patient.hospital_needs_review || !patient.diagnosis_category;
+      if (!needsReview) return false;
+    }
+
     // 기존 검색 필터
     if (searchTerm.trim()) {
       const search = searchTerm.toLowerCase();
@@ -425,6 +431,16 @@ export default function FirstVisitManagement() {
           <div className="flex items-center justify-between">
             <CardTitle>등록된 환자 목록 ({filteredPatients.length}명)</CardTitle>
             <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-sm cursor-pointer whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={showNeedsReviewOnly}
+                  onChange={(e) => setShowNeedsReviewOnly(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                진단·병원 확인 필요만
+                <span className="text-orange-600 font-medium">({needsReviewCount}명)</span>
+              </label>
               <div className="relative w-80">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -578,7 +594,12 @@ export default function FirstVisitManagement() {
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-[10px] text-muted-foreground/30">진단</span>
-                        <span className="whitespace-nowrap">{patient.diagnosis_category || '-'}</span>
+                        <span className="whitespace-nowrap flex items-center gap-1">
+                          {(patient.diagnosis_needs_review || patient.hospital_needs_review) && (
+                            <span className="inline-block h-2 w-2 rounded-full bg-orange-500 shrink-0" title="확인 필요" />
+                          )}
+                          {patient.diagnosis_category || '-'}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-32">
