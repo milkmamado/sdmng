@@ -214,57 +214,102 @@ export default function UserManual() {
               <div>
                 <h4 className="font-semibold flex items-center gap-2 mb-3">
                   <Plus className="w-4 h-4 text-green-600" />
-                  신규 환자 등록 절차 (CRM 연동)
+                  신규 환자 등록 (CRM 연동)
                 </h4>
-                <ol className="space-y-3 ml-4">
-                  <li className="flex gap-2">
-                    <span className="font-bold text-primary">1.</span>
-                    <div>
-                      우측 상단 <Badge>새 환자 등록</Badge> 버튼 클릭
+
+                <div className="space-y-4">
+                  {/* 방법 1 — 권장 */}
+                  <div className="border-2 border-green-500 rounded-lg p-4 bg-green-50/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge className="bg-green-600">권장</Badge>
+                      <p className="font-semibold">방법 1 — CRM에서 바로 보내기</p>
                     </div>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-bold text-primary">2.</span>
-                    <div>
-                      조회 창에서 <strong>환자명</strong>과 <strong>전화번호</strong> 입력 후 <Badge>조회</Badge> 버튼 클릭
-                      <div className="mt-1 text-sm text-muted-foreground ml-4">
-                        → CRM 시스템 페이지가 새 탭으로 열립니다
-                      </div>
-                    </div>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-bold text-primary">3.</span>
-                    <div>
-                      <strong>CRM 연동 북마크 사용:</strong>
-                      <ul className="mt-2 space-y-1 ml-4 text-sm">
-                        <li>• 북마크바의 <Badge variant="outline">CRM 연동</Badge> 북마크 클릭</li>
-                        <li>• 자동으로 환자 검색이 실행됩니다</li>
-                        <li>• 해당 환자명을 더블클릭하면 상세 정보가 자동으로 추출됩니다</li>
-                      </ul>
-                      <div className="mt-2 bg-blue-50 border-l-4 border-blue-500 p-3">
-                        <p className="text-xs">
-                          <strong>⚠️ 중요:</strong> 북마크 클릭 전에 미리 CRM 프로그램에 로그인해 두어야 합니다. 
-                          로그인이 안 되어 있으면 데이터를 가져올 수 없습니다!
-                        </p>
-                      </div>
-                    </div>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-bold text-primary">4.</span>
-                    <div>
-                      자동으로 가져온 정보 확인 및 추가 정보 입력:
-                      <ul className="mt-2 space-y-1 ml-4 text-sm">
-                        <li>• <strong>자동 입력:</strong> 고객번호, 환자명, 연락처, 나이, 주소, 내원동기, 진단명 등</li>
-                        <li>• <strong>수동 입력:</strong> 유입/실패, 입원/외래, 담당매니저, 주치의 정보 등</li>
-                        <li>• <strong>선택 입력:</strong> 보호자 정보, 추가 메모</li>
-                      </ul>
-                    </div>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-bold text-primary">5.</span>
-                    <div><Badge>등록</Badge> 버튼으로 완료</div>
-                  </li>
-                </ol>
+                    <ol className="space-y-2 ml-4 text-sm">
+                      <li className="flex gap-2">
+                        <span className="font-bold text-green-700">1.</span>
+                        <div>
+                          CRM에서 <strong>환자 상세 화면</strong>을 연 상태에서 북마크바의 <Badge variant="outline">CRM 연동</Badge> 클릭
+                        </div>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-green-700">2.</span>
+                        <div>사이트 초진관리가 새 탭으로 열리며 <strong>등록 폼이 자동으로 채워집니다</strong></div>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-green-700">3.</span>
+                        <div>유입상태·유입일·상담일·내원형태 등 사이트 입력 항목을 작성한 뒤 <Badge>등록</Badge> 클릭</div>
+                      </li>
+                    </ol>
+                    <ul className="mt-3 ml-4 text-sm space-y-1 text-muted-foreground">
+                      <li>• 이미 등록된 환자라면 새로 만들지 않고, <strong>수정 화면이 바뀐 값으로</strong> 열립니다 → 확인 후 <Badge>수정</Badge></li>
+                      <li>• CRM 이름과 사이트 이름이 다르면 <strong>아무것도 바꾸지 않습니다</strong></li>
+                    </ul>
+                  </div>
+
+                  {/* 방법 2 — 기존 방식 */}
+                  <div className="border rounded-lg p-4">
+                    <p className="font-semibold mb-3">방법 2 — 사이트에서 조회 (기존 방식)</p>
+                    <ol className="space-y-3 ml-4">
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">1.</span>
+                        <div>
+                          우측 상단 <Badge>새 환자 등록</Badge> 버튼 클릭
+                        </div>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">2.</span>
+                        <div>
+                          조회 창에서 <strong>환자명</strong>과 <strong>전화번호</strong> 입력 후 <Badge>조회</Badge> 버튼 클릭
+                          <div className="mt-1 text-sm text-muted-foreground ml-4">
+                            → CRM 시스템 페이지가 새 탭으로 열립니다
+                          </div>
+                        </div>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">3.</span>
+                        <div>
+                          <strong>CRM 연동 북마크 사용:</strong>
+                          <ul className="mt-2 space-y-1 ml-4 text-sm">
+                            <li>• 북마크바의 <Badge variant="outline">CRM 연동</Badge> 북마크 클릭</li>
+                            <li>• 자동으로 환자 검색이 실행됩니다</li>
+                            <li>• 해당 환자명을 더블클릭하면 상세 정보가 자동으로 추출됩니다</li>
+                          </ul>
+                          <div className="mt-2 bg-blue-50 border-l-4 border-blue-500 p-3">
+                            <p className="text-xs">
+                              <strong>⚠️ 중요:</strong> 북마크 클릭 전에 미리 CRM 프로그램에 로그인해 두어야 합니다. 
+                              로그인이 안 되어 있으면 데이터를 가져올 수 없습니다!
+                            </p>
+                          </div>
+                        </div>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">4.</span>
+                        <div>
+                          자동으로 가져온 정보 확인 및 추가 정보 입력:
+                          <ul className="mt-2 space-y-1 ml-4 text-sm">
+                            <li>• <strong>자동 입력:</strong> 고객번호, 환자명, 연락처, 나이, 주소, 내원동기 등</li>
+                            <li>• <strong>수동 입력:</strong> 유입/실패, 입원/외래, 담당매니저, 주치의 정보 등</li>
+                            <li>• <strong>선택 입력:</strong> 보호자 정보, 추가 메모</li>
+                          </ul>
+                        </div>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">5.</span>
+                        <div><Badge>등록</Badge> 버튼으로 완료</div>
+                      </li>
+                    </ol>
+                  </div>
+
+                  {/* 두 방법 공통 안내 */}
+                  <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+                    <p className="text-sm leading-relaxed">
+                      <strong>진단명·이전병원은 자동으로 채워집니다.</strong> 저장하면 상담내용의{' '}
+                      <code className="bg-yellow-100 px-1">진단명 :</code>{' '}
+                      <code className="bg-yellow-100 px-1">본병원 :</code> 표기와 진료메모2의 상병코드(예: C50)를 읽어 자동 분류합니다.
+                      상담내용에 <code className="bg-yellow-100 px-1">진단명 : ○○ / 본병원 : ○○</code> 형식으로 적어주시면 정확도가 올라갑니다.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <Separator />
@@ -295,7 +340,7 @@ export default function UserManual() {
                 <div className="bg-orange-50 border-l-4 border-orange-500 p-3">
                   <ul className="text-sm space-y-1">
                     <li>• 환자 삭제는 복구할 수 없으니 신중하게 진행하세요</li>
-                    <li>• CRM 연동 북마크가 설정되어 있어야 자동 입력이 가능합니다</li>
+                    <li>• CRM 연동 북마크(v2)가 설정되어 있어야 합니다 (8. CRM 연동 참고)</li>
                     <li>• 중복 등록을 방지하기 위해 등록 전 검색으로 기존 환자 여부를 확인하세요</li>
                   </ul>
                 </div>
@@ -357,6 +402,87 @@ export default function UserManual() {
                   <li>2. 상세 정보 팝업에서 각 필드를 직접 클릭하여 수정</li>
                   <li>3. 수정 완료 후 <Badge>수정</Badge> 버튼을 클릭하여 저장</li>
                 </ol>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="font-semibold mb-3">🔄 CRM 일괄 동기화</h4>
+                <ol className="space-y-2 ml-4">
+                  <li>1. <strong>CRM에 먼저 로그인</strong>해 두기</li>
+                  <li>2. 환자 리스트 상단 <Badge>CRM 일괄 동기화</Badge> 클릭 → CRM 창이 자동으로 열림</li>
+                  <li>3. 열린 CRM 창에서 북마크바 <Badge variant="outline">CRM 연동</Badge> 클릭 → 우측 상단에 진행률 표시</li>
+                  <li>4. 사이트 창에 미리보기가 뜨면 변경 내용을 확인하고 <Badge>적용</Badge></li>
+                </ol>
+
+                <div className="grid gap-3 sm:grid-cols-2 mt-3">
+                  <div className="border rounded-lg p-3">
+                    <p className="text-sm font-medium mb-1">가져오는 항목</p>
+                    <p className="text-sm text-muted-foreground">
+                      휴대폰번호, 나이, 특이사항1·2, 진료메모1·2, 최초·최종 내원일, 상담내용
+                    </p>
+                  </div>
+                  <div className="border rounded-lg p-3">
+                    <p className="text-sm font-medium mb-1">바꾸지 않는 항목</p>
+                    <p className="text-sm text-muted-foreground">
+                      이름, 주민번호, 주소, 담당자, 유입·관리 상태, 유입일, 결제·매출
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 border-l-4 border-green-500 p-3 mt-3">
+                  <p className="text-sm">
+                    하루 1번(출근 후) 권장. 본인 환자 기준 1~2분이면 끝납니다. 진행 중에는 사이트 창을 닫지 마세요.
+                  </p>
+                </div>
+
+                <div className="bg-orange-50 border-l-4 border-orange-500 p-3 mt-3">
+                  <p className="text-sm font-semibold mb-1">🛡️ 안전장치</p>
+                  <ul className="text-sm space-y-1">
+                    <li>• CRM 이름과 사이트 이름이 다르면 그 환자는 건드리지 않음</li>
+                    <li>• CRM에 값이 없으면 기존 값 유지</li>
+                    <li>• 최종 내원일은 더 늦은 날짜로만 바뀜</li>
+                    <li>• 상담 기록이 여러 건인 환자는 기존 상담내용 유지</li>
+                  </ul>
+                </div>
+
+                <p className="text-xs text-muted-foreground mt-2">
+                  CRM 창이 로그인 화면으로 열렸다면, 로그인 후 사이트에서 「CRM 일괄 동기화」를 다시 눌러주세요.
+                </p>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="font-semibold mb-3">🩺 진단명 · 이전병원 확인</h4>
+                <div className="space-y-3">
+                  <div className="border rounded-lg p-3">
+                    <ul className="text-sm space-y-2">
+                      <li className="flex items-start gap-2">
+                        <Badge variant="secondary">자동</Badge>
+                        <span>상담내용·상병코드로 자동 확정된 값</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Badge className="bg-orange-600">확인 필요</Badge>
+                        <span>자동 분류가 애매하거나 상담내용과 상병코드가 다른 경우</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Badge variant="outline">수동</Badge>
+                        <span>직접 선택하거나 확인한 값 — 이후 자동 분류가 덮어쓰지 않음</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <ol className="space-y-2 ml-4 text-sm">
+                    <li>
+                      1. 리스트 상단 <Badge variant="outline">진단·병원 확인 필요만</Badge> 체크 → 확인이 필요하거나
+                      진단명이 비어 있는 환자만 표시
+                    </li>
+                    <li>
+                      2. 환자 수정 화면의 <strong>「진단명 · 이전병원」</strong> 영역에서 드롭다운으로 선택하거나{' '}
+                      <Badge variant="outline">이대로 확인</Badge> 클릭
+                    </li>
+                  </ol>
+                </div>
               </div>
 
               <Separator />
@@ -901,23 +1027,63 @@ export default function UserManual() {
             <CardDescription>병원 CRM 시스템과의 연동</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-3">🔗 북마클릿 설치</h4>
-                <ol className="space-y-2 ml-4">
-                  <li>1. CRM 연동 페이지로 이동</li>
-                  <li>2. <Badge>CRM 연동 북마클릿</Badge> 버튼을 브라우저 북마크바로 드래그</li>
-                  <li>3. 병원 CRM 시스템에 로그인 후 북마클릿 클릭</li>
-                  <li>4. 환자 정보가 자동으로 입력된 등록 창이 열립니다</li>
-                </ol>
-              </div>
+             <div className="space-y-4">
+               <div>
+                 <h4 className="font-semibold mb-3">🔗 북마크 설치 (v2, 1회만)</h4>
+                 <ol className="space-y-2 ml-4">
+                   <li>1. 사이드바의 <strong>「CRM 연동 설정」</strong> 메뉴에서 <Badge>CRM 연동 코드 복사</Badge> 클릭</li>
+                   <li>2. 크롬 북마크바의 기존 <strong>「CRM 연동」</strong> 북마크에 우클릭 → <strong>수정</strong> (없으면 아무 페이지에서 <code className="bg-muted px-1">Ctrl+D</code>로 새로 만들고 이름은 <code className="bg-muted px-1">CRM 연동</code>)</li>
+                   <li>3. URL 칸의 내용을 <strong>전부 지운 뒤</strong> 복사한 코드를 붙여넣기 → 저장</li>
+                 </ol>
+                 <div className="bg-blue-50 border-l-4 border-blue-500 p-3 mt-3">
+                   <p className="text-sm">
+                     <strong>v2부터는</strong> 기능이 개선돼도 북마크를 다시 바꿀 필요가 없습니다.
+                   </p>
+                 </div>
+               </div>
 
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-                <p className="text-sm">
-                  <strong>중요:</strong> 크롬 브라우저로만 작동하며 연동이되지 않을 경우 크롬 브라우저 시크릿모드로 브라우저 접속하여 이용하시면 됩니다. 시크릿모드는 모니터 하단 크롬 브라우저 아이콘에 마우스 커서를 올린 후 우클릭, '새 시크릿 창' 선택하시면 됩니다. 또는 크롬브라우저 열린 상태에서 ctr + shift + n 누르셔도 접속 가능합니다.
-                </p>
-              </div>
-            </div>
+               <Separator />
+
+               <div>
+                 <h4 className="font-semibold mb-3">📌 북마크 쓰임새 3가지</h4>
+                 <div className="grid gap-3 sm:grid-cols-3">
+                   <div className="border rounded-lg p-3">
+                     <p className="font-medium mb-1">① 일괄 동기화</p>
+                     <p className="text-sm text-muted-foreground">
+                       사이트 환자 리스트에서 시작합니다. <span className="text-xs">(3. 관리 환자 리스트 참고)</span>
+                     </p>
+                   </div>
+                   <div className="border rounded-lg p-3">
+                     <p className="font-medium mb-1">② CRM에서 바로 보내기</p>
+                     <p className="text-sm text-muted-foreground">
+                       CRM 환자 상세 화면에서 클릭합니다. <span className="text-xs">(2. 초진관리 참고)</span>
+                     </p>
+                   </div>
+                   <div className="border rounded-lg p-3">
+                     <p className="font-medium mb-1">③ 기존 조회·최신화</p>
+                     <p className="text-sm text-muted-foreground">
+                       사이트 「새 환자 등록 → 조회」, 「기본 정보 최신화」, 「휴대폰 번호 최신화」 버튼으로 열린 CRM 창에서
+                       클릭한 뒤 환자를 더블클릭합니다.
+                     </p>
+                   </div>
+                 </div>
+               </div>
+
+               <Separator />
+
+               <div>
+                 <h4 className="font-semibold mb-3">⚠️ 공통 주의</h4>
+                 <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
+                   <ul className="text-sm space-y-1">
+                     <li>• <strong>크롬 브라우저</strong>에서만 작동합니다</li>
+                     <li>• 북마크를 누르기 전에 <strong>CRM에 로그인</strong>되어 있어야 합니다</li>
+                     <li>• 사이트와 CRM을 <strong>같은 크롬 창·같은 모드</strong>에서 쓰세요 (사이트는 일반 창, CRM은 시크릿 창처럼 섞이면 연동되지 않습니다)</li>
+                     <li>• 연동이 안 되면 두 창을 모두 닫고 크롬 시크릿 창(<code className="bg-blue-100 px-1">Ctrl+Shift+N</code>)에서 사이트 → CRM 순서로 다시 열어보세요</li>
+                     <li>• <strong>「CRM 로그인이 만료됐습니다」</strong>가 뜨면 CRM에 다시 로그인한 뒤 처음부터 시작하세요</li>
+                   </ul>
+                 </div>
+               </div>
+             </div>
           </CardContent>
         </Card>
 
