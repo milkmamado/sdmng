@@ -149,6 +149,8 @@ export interface AdmissionPlan {
   lastDischargeDate: string | null;
   /** ADMS_SYNC_START 이후 입원 기록이 있는지 */
   hasRecentAdmission: boolean;
+  /** 퇴원일이 없어(빈 값·미래) 재원을 채우지 못한 행 수 */
+  skippedRows: number;
 }
 
 export function buildAdmissionDays(adms: CrmAdmsRow[] | null | undefined, today: string): AdmissionPlan {
@@ -158,25 +160,42 @@ export function buildAdmissionDays(adms: CrmAdmsRow[] | null | undefined, today:
     const cur = days.get(date);
     if (!cur || ADM_PRIORITY[t] > ADM_PRIORITY[cur]) days.set(date, t);
   };
+  // 유효한 행만: 입원일이 있고 오늘 이전
+  const rows = (adms || [])
+    .map((row) => ({ a: crmDate(row.admsDate), d: crmDate(row.dschDate), yn: String(row.admsYn ?? '').trim() }))
+    .filter((r): r is { a: string; d: string | null; yn: string } => !!r.a && r.a <= today);
+  // 현재 입원 중 판정용: 가장 늦은 입원일 (이보다 늦은 행이 있으면 오래된 미정리 기록)
+  const maxA = rows.reduce<string | null>((m, r) => (!m || r.a > m ? r.a : m), null);
   let isAdmittedNow = false;
+  let skippedRows = 0;
   let hasRecentAdmission = false;
   let last: { a: string; d: string | null; discharged: boolean } | null = null;
-  for (const row of adms || []) {
-    const a = crmDate(row.admsDate);
-    const d = crmDate(row.dschDate);
-    if (!a || a > today) continue;
-    const discharged = row.admsYn === '퇴원' && !!d && d >= a;
-    if (row.admsYn !== '퇴원') isAdmittedNow = true;
-    if (a >= ADMS_SYNC_START || (d && d >= ADMS_SYNC_START)) hasRecentAdmission = true;
-    if (!last || a > last.a) last = { a, d, discharged };
-    put(a, '입원');
-    const stayEnd = discharged ? addDaysStr(d!, -1) : today;
-    for (let x = addDaysStr(a, 1); x <= stayEnd && x <= today; x = addDaysStr(x, 1)) put(x, '재원');
-    if (discharged && d! > a && d! <= today) put(d!, '퇴원');
+  for (const r of rows) {
+    // ongoing: admsYn이 '재원'/'입원'이고 다른 행 중 더 늦은 입원일이 없는 행만
+    const ongoing = (r.yn === '재원' || r.yn === '입원') && r.a === maxA;
+    let discharged = false;
+    if (ongoing) {
+      isAdmittedNow = true;
+      put(r.a, '입원');
+      for (let x = addDaysStr(r.a, 1); x <= today; x = addDaysStr(x, 1)) put(x, '재원');
+    } else if (r.d && r.d >= r.a && r.d <= today) {
+      // 진행 중이 아닌데 퇴원일이 있으면(빈 값·알 수 없는 값 포함) 퇴원된 것으로 처리
+      discharged = true;
+      put(r.a, '입원');
+      const stayEnd = addDaysStr(r.d, -1);
+      for (let x = addDaysStr(r.a, 1); x <= stayEnd && x <= today; x = addDaysStr(x, 1)) put(x, '재원');
+      if (r.d > r.a) put(r.d, '퇴원');
+    } else {
+      // 퇴원일이 없거나 미래 → 입원 한 칸만, 재원은 채우지 않음
+      skippedRows++;
+      put(r.a, '입원');
+    }
+    if (r.a >= ADMS_SYNC_START || (r.d && r.d >= ADMS_SYNC_START)) hasRecentAdmission = true;
+    if (!last || r.a > last.a) last = { a: r.a, d: r.d, discharged };
   }
   const lastDischargeDate =
     last && last.discharged && !isAdmittedNow && last.d! <= today ? last.d : null;
-  return { days, isAdmittedNow, lastDischargeDate, hasRecentAdmission };
+  return { days, isAdmittedNow, lastDischargeDate, hasRecentAdmission, skippedRows };
 }
 
 export interface DailyDiff {
