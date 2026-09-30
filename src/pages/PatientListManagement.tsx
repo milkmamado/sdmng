@@ -1716,17 +1716,9 @@ export default function PatientListManagement() {
             <PackageIcon className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold">패키지 관리</h3>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground">패키지는 「CRM 일괄 동기화」로 자동 반영됩니다.</p>
             {detailReadOnly ? null : (<>
-            <Button
-              onClick={handleSyncPackage}
-              disabled={syncingPackage || !selectedPatientDetail?.customer_number}
-              size="sm"
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncingPackage ? 'animate-spin' : ''}`} />
-              최신화
-            </Button>
             <Button
               onClick={handleDeletePackageData}
               variant="destructive"
@@ -1745,7 +1737,7 @@ export default function PatientListManagement() {
           </div>
         ) : !packageData && packageTransactions.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            최신화 버튼을 클릭하여 CRM에서 패키지 정보를 가져오세요.
+            패키지는 「CRM 일괄 동기화」로 자동 반영됩니다.
           </div>
         ) : (
           <>

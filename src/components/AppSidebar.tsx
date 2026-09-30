@@ -10,7 +10,6 @@ import {
   BarChart3,
   BookOpen,
   BookMarked,
-  Package,
   UserX,
   FileSpreadsheet,
   AlertTriangle,
@@ -41,7 +40,6 @@ const getNavigationItems = (branch: string) => [
   { title: "면책환자 관리", url: `/${branch}/exempt-management`, icon: Shield },
   { title: "통계 관리", url: `/${branch}/statistics`, icon: BarChart3 },
   { title: "CRM 연동", url: `/${branch}/crm-bookmarklet`, icon: BookMarked },
-  { title: "패키지 연동", url: `/${branch}/package-integration`, icon: Package },
   { title: "사용자 메뉴얼", url: `/${branch}/user-manual`, icon: BookOpen },
 ];
 
