@@ -319,8 +319,8 @@ export default function StatisticsManagement() {
       const inflowBreakdown = {
         managed: inflowAllList.filter(p => p.management_status === '관리 중').length,
         completed: inflowAllList.filter(p => p.management_status === '치료종료').length,
-        out: inflowAllList.filter(p => p.management_status === '아웃').length,
-        other: inflowAllList.filter(p => !['관리 중', '치료종료', '아웃'].includes(p.management_status)).length,
+        out: inflowAllList.filter(p => p.management_status === '아웃' || p.management_status === '아웃위기').length,
+        other: inflowAllList.filter(p => !['관리 중', '치료종료', '아웃', '아웃위기'].includes(p.management_status)).length,
       };
       
       console.log('[통계관리] 신규 등록 결과:', monthNewPatients?.length);
@@ -1461,7 +1461,7 @@ export default function StatisticsManagement() {
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{additionalStats.inflowAllThisMonth}명</div>
             <CardDescription className="text-xs mt-1">
-              관리 중 {additionalStats.inflowBreakdown.managed} · 치료종료 {additionalStats.inflowBreakdown.completed} · 아웃 {additionalStats.inflowBreakdown.out}
+              관리 중 {additionalStats.inflowBreakdown.managed} · 치료종료 {additionalStats.inflowBreakdown.completed} · 아웃·위기 {additionalStats.inflowBreakdown.out}
               {additionalStats.inflowBreakdown.other > 0 && ` · 기타 ${additionalStats.inflowBreakdown.other}`}
             </CardDescription>
           </CardContent>
