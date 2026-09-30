@@ -285,7 +285,10 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
         failed++;
       }
     }
-    for (let i = 0; i < classifyIds.length; i += 50) callClassifyPatient(classifyIds.slice(i, i + 50));
+    // 서버에서 AI 호출이 순차라 10명씩 백그라운드 순차 호출 (적용 흐름은 막지 않음)
+    (async () => {
+      for (let i = 0; i < classifyIds.length; i += 10) await callClassifyPatient(classifyIds.slice(i, i + 10));
+    })();
     setApplyResult({ ok, failed, daysSaved, daysFailed, removed, removeFailed });
     setApplying(false);
     onApplied?.();

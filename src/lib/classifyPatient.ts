@@ -21,6 +21,11 @@ export async function callClassifyPatient(patientIds: string[]): Promise<void> {
     });
     if (!res.ok) {
       console.error('classify-patient failed:', res.status, await res.text().catch(() => ''));
+    } else {
+      const json = await res.json().catch(() => null);
+      if (Array.isArray(json?.errors) && json.errors.length > 0) {
+        console.warn('classify-patient partial errors', json.errors);
+      }
     }
   } catch (e) {
     console.error('classify-patient error:', e);
