@@ -951,6 +951,23 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         </div>
       </div>
 
+      {/* 진단명 · 이전병원 섹션 (자동 분류 + 수동 수정) */}
+      <ClassificationSection
+        patient={patient}
+        diagnosisCategory={formData.diagnosis_category}
+        diagnosisDetail={formData.diagnosis_detail}
+        hospitalCategory={formData.hospital_category}
+        hospitalBranch={formData.hospital_branch}
+        onFieldChange={handleClassFieldChange}
+        onManualChange={handleClassManualChange}
+        dxSource={classMeta.diagnosis_source}
+        dxNeedsReview={classMeta.diagnosis_needs_review}
+        dxRaw={classMeta.diagnosis_raw}
+        hsSource={classMeta.hospital_source}
+        hsNeedsReview={classMeta.hospital_needs_review}
+        hsRaw={classMeta.hospital_raw}
+      />
+
       {/* 수동 입력 정보 섹션 */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b">
