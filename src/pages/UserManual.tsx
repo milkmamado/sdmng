@@ -1028,7 +1028,7 @@ export default function UserManual() {
                <div>
                  <h4 className="font-semibold mb-3">🔗 북마크 설치 (v2, 1회만)</h4>
                  <ol className="space-y-2 ml-4">
-                   <li>1. 사이드바의 <strong>「CRM 연동 설정」</strong> 메뉴에서 <Badge>CRM 연동 코드 복사</Badge> 클릭</li>
+                   <li>1. 사이드바의 <strong>「CRM 연동」</strong> 메뉴에서 <Badge>CRM 연동 코드 복사</Badge> 클릭</li>
                    <li>2. 크롬 북마크바의 기존 <strong>「CRM 연동」</strong> 북마크에 우클릭 → <strong>수정</strong> (없으면 아무 페이지에서 <code className="bg-muted px-1">Ctrl+D</code>로 새로 만들고 이름은 <code className="bg-muted px-1">CRM 연동</code>)</li>
                    <li>3. URL 칸의 내용을 <strong>전부 지운 뒤</strong> 복사한 코드를 붙여넣기 → 저장</li>
                  </ol>
