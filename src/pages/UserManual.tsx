@@ -550,9 +550,6 @@ export default function UserManual() {
 
               <Separator />
 
-
-              <Separator />
-
               <div>
                 <h4 className="font-semibold mb-3">🔄 관리 상태 설명</h4>
                 <div className="space-y-3">
