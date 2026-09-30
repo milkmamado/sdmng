@@ -433,17 +433,20 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
       // 변경된 필드만 추출
       const updatedFields: any = {};
       const apiFields = [
-        'name', 'customer_number', 'resident_number_masked', 'phone', 
-        'gender', 'age', 'visit_motivation', 
-        'diagnosis_category', 'diagnosis_detail', 'hospital_category', 'hospital_branch', 
-        'address', 'crm_memo', 'counseling_content', 'special_note_1', 'special_note_2', 
+        'name', 'customer_number', 'resident_number_masked', 'phone',
+        'gender', 'age', 'visit_motivation',
+        'address', 'crm_memo', 'counseling_content', 'special_note_1', 'special_note_2',
         'treatment_memo_1', 'treatment_memo_2'
       ];
+      // 진단명·이전병원 4개 필드는 자동 분류가 담당하므로 최신화 대상에서 제외
 
       apiFields.forEach(field => {
         const crmValue = crmData[field];
         const currentValue = patient[field as keyof typeof patient];
-        
+
+        // CRM 값이 빈 문자열이면 기존 값 유지 (빈 값으로 덮어쓰지 않음)
+        if (typeof crmValue === 'string' && crmValue.trim() === '') return;
+
         // 값이 다르면 업데이트 대상에 추가
         if (crmValue !== undefined && crmValue !== null && crmValue !== currentValue) {
           if (field === 'age' && crmValue) {
@@ -482,6 +485,11 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         description: `${Object.keys(updatedFields).length}개 필드가 업데이트되었습니다.`,
         duration: 2000,
       });
+
+      // 상담내용이 바뀌었으면 자동 분류 호출 (fire-and-forget, 저장 흐름 차단 안 함)
+      if (updatedFields.counseling_content !== undefined) {
+        callClassifyPatient([patient.id]);
+      }
 
     } catch (error) {
       console.error('Error updating patient data:', error);
@@ -548,11 +556,7 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         gender: formData.gender || null,
         age: formData.age ? parseInt(formData.age) : null,
         visit_motivation: formData.visit_motivation || null,
-        
-        diagnosis_category: formData.diagnosis_category || null,
-        diagnosis_detail: formData.diagnosis_detail || null,
-        hospital_category: formData.hospital_category || null,
-        hospital_branch: formData.hospital_branch || null,
+
         address: formData.address || null,
         crm_memo: formData.crm_memo || null,
         counseling_content: formData.counseling_content || null,
@@ -578,6 +582,25 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         branch: currentBranch // 현재 지점 정보 추가
       };
 
+      // 진단명·이전병원: 사용자가 해당 영역을 건드린 경우에만 payload에 포함
+      // (안 건드렸으면 기존 값·source 그대로 유지)
+      if (!patient || classTouched.diagnosis) {
+        patientData.diagnosis_category = formData.diagnosis_category || null;
+        patientData.diagnosis_detail = formData.diagnosis_detail || null;
+        if (classTouched.diagnosis) {
+          patientData.diagnosis_source = 'manual';
+          patientData.diagnosis_needs_review = false;
+        }
+      }
+      if (!patient || classTouched.hospital) {
+        patientData.hospital_category = formData.hospital_category || null;
+        patientData.hospital_branch = formData.hospital_branch || null;
+        if (classTouched.hospital) {
+          patientData.hospital_source = 'manual';
+          patientData.hospital_needs_review = false;
+        }
+      }
+
       if (patient) {
         const { error } = await supabase
           .from('patients')
@@ -591,7 +614,10 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
           description: "환자 정보가 저장되었습니다.",
           duration: 1500,
         });
-        
+
+        // 저장 성공 직후 자동 분류 (fire-and-forget, 저장 흐름 차단 안 함)
+        callClassifyPatient([patient.id]);
+
         // 저장 후 모달 닫기
         onClose();
       } else {
@@ -621,7 +647,10 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
           description: "새 환자가 등록되었습니다.",
           duration: 1500,
         });
-        
+
+        // 저장 성공 직후 자동 분류 (fire-and-forget, 저장 흐름 차단 안 함)
+        if (newPatient?.id) callClassifyPatient([newPatient.id]);
+
         // 저장 후 모달 닫기
         onClose();
       }
