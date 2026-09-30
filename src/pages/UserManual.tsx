@@ -245,7 +245,7 @@ export default function UserManual() {
                     </ul>
                   </div>
 
-                  {/* 두 방법 공통 안내 */}
+                  {/* 공통 안내 */}
                   <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
                     <p className="text-sm leading-relaxed">
                       <strong>진단명·이전병원은 자동으로 채워집니다.</strong> 저장하면 상담내용의{' '}
