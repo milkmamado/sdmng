@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllQuery } from '@/lib/fetchAllRows';
 import { useAuth } from '@/hooks/useAuth';
 import { callClassifyPatient } from '@/lib/classifyPatient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,10 +49,10 @@ export default function ClassificationOptions() {
     const [{ data: dx }, { data: hs }, { data: patients }] = await Promise.all([
       supabase.from('diagnosis_options').select('id, name, parent_id, aliases, sort_order').order('sort_order', { ascending: true }),
       supabase.from('hospital_options').select('id, name, parent_id, aliases, sort_order').order('sort_order', { ascending: true }),
-      supabase
+      fetchAllQuery(supabase
         .from('patients')
         .select('id, diagnosis_category, diagnosis_detail, hospital_category, hospital_branch, diagnosis_raw, hospital_raw, diagnosis_needs_review, hospital_needs_review')
-        .eq('branch', branch),
+        .eq('branch', branch)),
     ]);
     if (dx) setDxOptions(dx);
     if (hs) setHsOptions(hs);
@@ -152,14 +153,14 @@ export default function ClassificationOptions() {
   const reclassifyAll = async () => {
     setReclassifying(true);
     try {
-      const { data: targets, error } = await supabase
+      const { data: targets, error } = await fetchAllQuery(supabase
         .from('patients')
         .select('id')
         .eq('branch', branch)
         .not('counseling_content', 'is', null)
         .neq('counseling_content', '')
         .or('diagnosis_source.neq.manual,diagnosis_source.is.null')
-        .or('hospital_source.neq.manual,hospital_source.is.null');
+        .or('hospital_source.neq.manual,hospital_source.is.null'));
       if (error) throw error;
       const ids = (targets || []).map((t) => t.id);
       setReclassProgress({ done: 0, total: ids.length });
