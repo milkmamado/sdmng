@@ -151,6 +151,8 @@ export interface AdmissionPlan {
   hasRecentAdmission: boolean;
   /** 퇴원일이 없어(빈 값·미래) 재원을 채우지 못한 행 수 */
   skippedRows: number;
+  /** 입원상태가 불명확(퇴원일 없음/미래, 진행 중 아님)해 반영하지 않은 행 */
+  unclearRows: { admsDate: string; admsYn: string }[];
 }
 
 export function buildAdmissionDays(adms: CrmAdmsRow[] | null | undefined, today: string): AdmissionPlan {
@@ -167,7 +169,7 @@ export function buildAdmissionDays(adms: CrmAdmsRow[] | null | undefined, today:
   // 현재 입원 중 판정용: 가장 늦은 입원일 (이보다 늦은 행이 있으면 오래된 미정리 기록)
   const maxA = rows.reduce<string | null>((m, r) => (!m || r.a > m ? r.a : m), null);
   let isAdmittedNow = false;
-  let skippedRows = 0;
+  const unclearRows: { admsDate: string; admsYn: string }[] = [];
   let hasRecentAdmission = false;
   let last: { a: string; d: string | null; discharged: boolean } | null = null;
   for (const r of rows) {
@@ -186,27 +188,32 @@ export function buildAdmissionDays(adms: CrmAdmsRow[] | null | undefined, today:
       for (let x = addDaysStr(r.a, 1); x <= stayEnd && x <= today; x = addDaysStr(x, 1)) put(x, '재원');
       if (r.d > r.a) put(r.d, '퇴원');
     } else {
-      // 퇴원일이 없거나 미래 → 입원 한 칸만, 재원은 채우지 않음
-      skippedRows++;
-      put(r.a, '입원');
+      // 퇴원일이 없거나 미래 + 진행 중 아님 → 신뢰 불가, 아무것도 넣지 않음
+      unclearRows.push({ admsDate: r.a, admsYn: r.yn });
     }
     if (r.a >= ADMS_SYNC_START || (r.d && r.d >= ADMS_SYNC_START)) hasRecentAdmission = true;
     if (!last || r.a > last.a) last = { a: r.a, d: r.d, discharged };
   }
   const lastDischargeDate =
     last && last.discharged && !isAdmittedNow && last.d! <= today ? last.d : null;
-  return { days, isAdmittedNow, lastDischargeDate, hasRecentAdmission, skippedRows };
+  return { days, isAdmittedNow, lastDischargeDate, hasRecentAdmission, skippedRows: unclearRows.length, unclearRows };
 }
 
 export interface DailyDiff {
   inserts: { date: string; type: AdmissionType }[];
   updates: { date: string; from: string; to: AdmissionType }[];
   conflicts: { date: string; existing: string; crm: AdmissionType }[];
+  /** CRM 입원기록에 없는 날의 기존 입원·재원·퇴원 (정리 후보) */
+  removals: { date: string; existing: string }[];
 }
 
 /** CRM 기간 밖의 기존 값은 절대 건드리지 않음 */
-export function diffDailyStatus(planDays: Map<string, AdmissionType>, existing: Map<string, string>): DailyDiff {
-  const out: DailyDiff = { inserts: [], updates: [], conflicts: [] };
+export function diffDailyStatus(
+  planDays: Map<string, AdmissionType>,
+  existing: Map<string, string>,
+  today: string,
+): DailyDiff {
+  const out: DailyDiff = { inserts: [], updates: [], conflicts: [], removals: [] };
   const dates = Array.from(planDays.keys()).sort();
   for (const date of dates) {
     const t = planDays.get(date)!;
@@ -215,6 +222,12 @@ export function diffDailyStatus(planDays: Map<string, AdmissionType>, existing: 
     else if (cur === t) continue;
     else if ((ADMISSION_TYPES as readonly string[]).includes(cur)) out.updates.push({ date, from: cur, to: t });
     else out.conflicts.push({ date, existing: cur, crm: t });
+  }
+  for (const [date, cur] of Array.from(existing.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+    if (date < ADMS_SYNC_START || date > today) continue;
+    if (!(ADMISSION_TYPES as readonly string[]).includes(cur)) continue;
+    if (planDays.has(date)) continue;
+    out.removals.push({ date, existing: cur });
   }
   return out;
 }
