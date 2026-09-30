@@ -1073,7 +1073,19 @@ export default function UserManual() {
                <div>
                  <h4 className="font-semibold mb-3">📌 북마크 쓰임새 2가지</h4>
                  <div className="grid gap-3 sm:grid-cols-2">
-...
+                   <div className="border rounded-lg p-3">
+                     <p className="font-medium mb-1">① 일괄 동기화</p>
+                     <p className="text-sm text-muted-foreground">
+                       사이트 환자 리스트에서 시작합니다. CRM 입원정보도 함께 가져와 일별 환자 상태에 자동 반영됩니다.{' '}
+                       <span className="text-xs">(3. 관리 환자 리스트 참고)</span>
+                     </p>
+                   </div>
+                   <div className="border rounded-lg p-3">
+                     <p className="font-medium mb-1">② CRM에서 바로 보내기</p>
+                     <p className="text-sm text-muted-foreground">
+                       CRM 환자 상세 화면에서 클릭합니다. <span className="text-xs">(2. 초진관리 참고)</span>
+                     </p>
+                   </div>
                  </div>
                </div>
 
