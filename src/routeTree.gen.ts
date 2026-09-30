@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiClassifyPatientRouteImport } from './routes/api/classify-patient'
 
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
@@ -22,31 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiClassifyPatientRoute = ApiClassifyPatientRouteImport.update({
+  id: '/api/classify-patient',
+  path: '/api/classify-patient',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/classify-patient': typeof ApiClassifyPatientRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/classify-patient': typeof ApiClassifyPatientRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/classify-patient': typeof ApiClassifyPatientRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$'
+  fullPaths: '/' | '/$' | '/api/classify-patient'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$'
-  id: '__root__' | '/' | '/$'
+  to: '/' | '/$' | '/api/classify-patient'
+  id: '__root__' | '/' | '/$' | '/api/classify-patient'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  ApiClassifyPatientRoute: typeof ApiClassifyPatientRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/classify-patient': {
+      id: '/api/classify-patient'
+      path: '/api/classify-patient'
+      fullPath: '/api/classify-patient'
+      preLoaderRoute: typeof ApiClassifyPatientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  ApiClassifyPatientRoute: ApiClassifyPatientRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
