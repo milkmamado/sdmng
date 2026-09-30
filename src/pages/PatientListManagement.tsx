@@ -2040,6 +2040,16 @@ export default function PatientListManagement() {
                   <ToggleGroupItem value="all" aria-label="전체">전체</ToggleGroupItem>
                 </ToggleGroup>
               )}
+              <label className="flex items-center gap-1.5 text-sm cursor-pointer whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={showNeedsReviewOnly}
+                  onChange={(e) => setShowNeedsReviewOnly(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                진단·병원 확인 필요만
+                <span className="text-orange-600 font-medium">({needsReviewCount}명)</span>
+              </label>
               <MonthFilter
                 selectedMonth={selectedMonth}
                 onMonthChange={setSelectedMonth}
