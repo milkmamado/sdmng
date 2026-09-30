@@ -169,39 +169,53 @@ export function buildAdmissionDays(adms: CrmAdmsRow[] | null | undefined, today:
     .filter((r): r is { a: string; d: string | null; yn: string } => !!r.a && r.a <= today);
   // 현재 입원 중 판정용: 가장 늦은 입원일 (이보다 늦은 행이 있으면 오래된 미정리 기록)
   const maxA = rows.reduce<string | null>((m, r) => (!m || r.a > m ? r.a : m), null);
-  let isAdmittedNow = false;
   const unclearRows: { admsDate: string; admsYn: string }[] = [];
   let hasRecentAdmission = false;
-  let last: { a: string; d: string | null; discharged: boolean } | null = null;
+  // 1. 각 행을 구간으로 분류
+  const segs: { start: string; end: string; ongoing: boolean }[] = [];
   for (const r of rows) {
     // ongoing: admsYn이 '재원'/'입원'이고 다른 행 중 더 늦은 입원일이 없는 행만
     const ongoing = (r.yn === '재원' || r.yn === '입원') && r.a === maxA;
-    let discharged = false;
     if (ongoing) {
-      isAdmittedNow = true;
-      put(r.a, '입원');
-      for (let x = addDaysStr(r.a, 1); x <= today; x = addDaysStr(x, 1)) put(x, '재원');
+      segs.push({ start: r.a, end: today, ongoing: true });
     } else if (r.d && r.d >= r.a && r.d <= today) {
       // 진행 중이 아닌데 퇴원일이 있으면(빈 값·알 수 없는 값 포함) 퇴원된 것으로 처리
-      discharged = true;
-      if (r.d === r.a) {
-        // 당일 입퇴원: 그날은 '낮병동' 한 칸만 (입원 칸을 넣지 않음)
-        put(r.a, '낮병동');
-      } else {
-        put(r.a, '입원');
-        const stayEnd = addDaysStr(r.d, -1);
-        for (let x = addDaysStr(r.a, 1); x <= stayEnd && x <= today; x = addDaysStr(x, 1)) put(x, '재원');
-        put(r.d, '퇴원');
-      }
+      segs.push({ start: r.a, end: r.d, ongoing: false });
     } else {
       // 퇴원일이 없거나 미래 + 진행 중 아님 → 신뢰 불가, 아무것도 넣지 않음
       unclearRows.push({ admsDate: r.a, admsYn: r.yn });
     }
     if (r.a >= ADMS_SYNC_START || (r.d && r.d >= ADMS_SYNC_START)) hasRecentAdmission = true;
-    if (!last || r.a > last.a) last = { a: r.a, d: r.d, discharged };
   }
+  // 2. start 오름차순 정렬 후 병합: 다음 입원일 <= 현재 퇴원일 이면 한 번의 입원으로 이어봄
+  //    (퇴원 당일 재입원은 이어붙이지만, 다음날 재입원(start = end+1)은 합치지 않음)
+  segs.sort((x, y) => (x.start < y.start ? -1 : x.start > y.start ? 1 : 0));
+  const merged: { start: string; end: string; ongoing: boolean }[] = [];
+  for (const s of segs) {
+    const m = merged[merged.length - 1];
+    if (m && s.start <= m.end) {
+      if (s.end > m.end) m.end = s.end;
+      m.ongoing = m.ongoing || s.ongoing;
+    } else {
+      merged.push({ ...s });
+    }
+  }
+  // 3. 병합된 구간마다 칸 채우기
+  for (const m of merged) {
+    if (m.start === m.end && !m.ongoing) {
+      // 당일 입퇴원 단독: 그날은 '낮병동' 한 칸만 (입원 칸을 넣지 않음)
+      put(m.start, '낮병동');
+      continue;
+    }
+    put(m.start, '입원');
+    const stayEnd = m.ongoing ? today : addDaysStr(m.end, -1);
+    for (let x = addDaysStr(m.start, 1); x <= stayEnd && x <= today; x = addDaysStr(x, 1)) put(x, '재원');
+    if (!m.ongoing) put(m.end, '퇴원');
+  }
+  const isAdmittedNow = merged.some((m) => m.ongoing);
+  const lastMerged = merged[merged.length - 1] ?? null;
   const lastDischargeDate =
-    last && last.discharged && !isAdmittedNow && last.d! <= today ? last.d : null;
+    lastMerged && !lastMerged.ongoing && lastMerged.end <= today ? lastMerged.end : null;
   return { days, isAdmittedNow, lastDischargeDate, hasRecentAdmission, skippedRows: unclearRows.length, unclearRows };
 }
 
