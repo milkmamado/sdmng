@@ -419,7 +419,7 @@ export default function UserManual() {
                   <div className="border rounded-lg p-3">
                     <p className="text-sm font-medium mb-1">가져오는 항목</p>
                     <p className="text-sm text-muted-foreground">
-                      휴대폰번호, 나이, 특이사항1·2, 진료메모1·2, 최초·최종 내원일, 상담내용
+                      휴대폰번호, 나이, 특이사항1·2, 진료메모1·2, 최초·최종 내원일, 상담내용, 입원정보
                     </p>
                   </div>
                   <div className="border rounded-lg p-3">
@@ -428,6 +428,33 @@ export default function UserManual() {
                       이름, 주민번호, 주소, 담당자, 유입·관리 상태, 유입일, 결제·매출
                     </p>
                   </div>
+                </div>
+
+                <div className="border rounded-lg p-3 mt-3">
+                  <p className="text-sm font-semibold mb-1">🏥 입원정보가 「일별 환자 상태 추적」에 자동 반영됩니다</p>
+                  <p className="text-sm text-muted-foreground">
+                    CRM 고객정보의 <strong>입원정보</strong>(입원일·퇴원일)도 함께 가져와 달력에 채웁니다.
+                    입원일 = <strong>입원</strong>, 그 사이 날짜 = <strong>재원</strong>, 퇴원일 = <strong>퇴원</strong>,
+                    현재 입원 중이면 오늘까지 <strong>재원</strong>으로 들어갑니다.
+                    5/1 이후~오늘까지만, 유입 환자만 대상입니다.
+                  </p>
+                  <ul className="text-sm space-y-1 mt-2">
+                    <li>• 이미 입원/재원/퇴원이 적힌 날은 CRM 기준으로 고쳐집니다.</li>
+                    <li>• 외래·기타 등 다른 상태가 적힌 날은 바꾸지 않고 <strong>「충돌」</strong>로만 표시됩니다.</li>
+                    <li>• CRM 입원기간 밖에 직접 입력한 값은 지우지 않습니다.</li>
+                  </ul>
+                </div>
+
+                <div className="border rounded-lg p-3 mt-3">
+                  <p className="text-sm font-semibold mb-1">미리보기의 두 체크박스</p>
+                  <ul className="text-sm space-y-1">
+                    <li>
+                      • <strong>「현재 입원 중인데 아웃/아웃위기 → 관리 중」</strong> — 기본 체크. 입원 중인 환자가 이탈 상태로 남아 있지 않게 바꿔줍니다.
+                    </li>
+                    <li>
+                      • <strong>「치료종료 처리」</strong> — 기본 해제. 부인과 수술 후 회복·척추 환자의 마지막 입원이 퇴원하면 관리 상태를 치료종료로 바꿉니다. 목록을 확인한 뒤 직접 체크해주세요.
+                    </li>
+                  </ul>
                 </div>
 
                 <div className="bg-green-50 border-l-4 border-green-500 p-3 mt-3">
@@ -443,11 +470,13 @@ export default function UserManual() {
                     <li>• CRM에 값이 없으면 기존 값 유지</li>
                     <li>• 최종 내원일은 더 늦은 날짜로만 바뀜</li>
                     <li>• 상담 기록이 여러 건인 환자는 기존 상담내용 유지</li>
+                    <li>• 달력의 다른 상태(외래·기타)는 절대 지우지 않음</li>
                   </ul>
                 </div>
 
                 <p className="text-xs text-muted-foreground mt-2">
                   CRM 창이 로그인 화면으로 열렸다면, 로그인 후 사이트에서 「CRM 일괄 동기화」를 다시 눌러주세요.
+                  입원정보 반영도 기존 북마크 그대로 되면, 새로 설치할 필요는 없습니다.
                 </p>
               </div>
 
@@ -1044,12 +1073,13 @@ export default function UserManual() {
                <div>
                  <h4 className="font-semibold mb-3">📌 북마크 쓰임새 3가지</h4>
                  <div className="grid gap-3 sm:grid-cols-3">
-                   <div className="border rounded-lg p-3">
-                     <p className="font-medium mb-1">① 일괄 동기화</p>
-                     <p className="text-sm text-muted-foreground">
-                       사이트 환자 리스트에서 시작합니다. <span className="text-xs">(3. 관리 환자 리스트 참고)</span>
-                     </p>
-                   </div>
+                    <div className="border rounded-lg p-3">
+                      <p className="font-medium mb-1">① 일괄 동기화</p>
+                      <p className="text-sm text-muted-foreground">
+                        사이트 환자 리스트에서 시작합니다. CRM 입원정보도 함께 가져와 일별 환자 상태에 자동 반영됩니다.{' '}
+                        <span className="text-xs">(3. 관리 환자 리스트 참고)</span>
+                      </p>
+                    </div>
                    <div className="border rounded-lg p-3">
                      <p className="font-medium mb-1">② CRM에서 바로 보내기</p>
                      <p className="text-sm text-muted-foreground">
