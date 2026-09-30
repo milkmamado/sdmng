@@ -148,26 +148,47 @@ export default function CRMBookmarklet() {
         <CardHeader>
           <CardTitle className="text-base">📌 북마크 쓰임새 2가지</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="border rounded-lg p-3">
-              <p className="font-medium mb-1">① 일괄 동기화</p>
-              <p className="text-sm text-muted-foreground">
-                사이트 환자 리스트에서 <strong>「CRM 일괄 동기화」</strong>를 눌러 시작합니다.
-                CRM <strong>입원정보</strong>(입원일·퇴원일)도 함께 가져와
-                <strong>「일별 환자 상태 추적」</strong>에 입원·재원·퇴원으로 자동 반영됩니다.
-              </p>
+              <p className="font-medium mb-1">① CRM 일괄 동기화</p>
+              <p className="text-sm text-muted-foreground">관리환자 리스트에서 동기화를 시작한 뒤 열린 CRM 창에서 북마크를 누릅니다.</p>
             </div>
             <div className="border rounded-lg p-3">
               <p className="font-medium mb-1">② CRM에서 바로 보내기</p>
-              <p className="text-sm text-muted-foreground">
-                CRM에서 환자 상세 화면을 연 상태로 클릭하면 초진관리 등록 폼이 열립니다.
-              </p>
+              <p className="text-sm text-muted-foreground">CRM 환자 상세 화면에서 북마크를 눌러 초진 등록 폼으로 보냅니다.</p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">
-            입원정보 자동 반영까지 <strong>기존 북마크 그대로</strong> 됩니다 — 북마크를 새로 설치하거나 다시 바꿀 필요는 없습니다.
-          </p>
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-3">
+            <p className="text-sm"><strong>북마크는 「CRM 연동」 하나만 사용합니다.</strong> 예전 「패키지 연동」 북마크는 더 이상 사용하지 않습니다.</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">🔄 일괄 동기화 범위</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="border rounded-lg p-3"><p className="font-medium mb-1">기본정보</p><p className="text-sm text-muted-foreground">휴대폰·나이·특이사항·진료메모·최초/최종내원일·상담내용</p></div>
+            <div className="border rounded-lg p-3"><p className="font-medium mb-1">입원정보</p><p className="text-sm text-muted-foreground">입원·재원·퇴원, 당일 입퇴원은 낮병동. 퇴원 당일 재입원은 재원으로 이어집니다.</p></div>
+            <div className="border rounded-lg p-3"><p className="font-medium mb-1">패키지</p><p className="text-sm text-muted-foreground">예치금 입금/사용, 적립금 입력/사용, 첩약관리 횟수</p></div>
+          </div>
+          <p className="text-sm text-muted-foreground">하루 1회 출근 후 권장합니다. 마스터 계정은 전체 환자, 실장 계정은 본인 환자를 동기화합니다.</p>
+          <div className="border rounded-lg p-3">
+            <p className="font-medium mb-2">미리보기에서 확인</p>
+            <ul className="text-sm space-y-1 text-muted-foreground">
+              <li>• 이름 불일치, 일별 상태 충돌</li>
+              <li>• CRM에 없는 입원·재원·퇴원 정리 대상 — 체크할 때만 삭제</li>
+              <li>• 치료종료 처리(기본 해제), 입원 중 아웃/아웃위기 → 관리 중(기본 체크)</li>
+              <li>• 패키지 거래 반영(기본 체크)</li>
+              <li>• CRM에 없는 기존 패키지 거래(삭제 안 함), 패키지 잔액 불일치, 종류 미정 패키지</li>
+            </ul>
+          </div>
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-3">
+            <p className="text-sm"><strong>수납금액 = 예치금 입금 합계</strong>이며, 사이트 패키지 잔액과 CRM 잔액이 같아야 정상입니다.</p>
+          </div>
         </CardContent>
       </Card>
 
