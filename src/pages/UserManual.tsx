@@ -218,11 +218,10 @@ export default function UserManual() {
                 </h4>
 
                 <div className="space-y-4">
-                  {/* 방법 1 — 권장 */}
+                  {/* CRM에서 바로 보내기 */}
                   <div className="border-2 border-green-500 rounded-lg p-4 bg-green-50/50">
                     <div className="flex items-center gap-2 mb-3">
-                      <Badge className="bg-green-600">권장</Badge>
-                      <p className="font-semibold">방법 1 — CRM에서 바로 보내기</p>
+                      <p className="font-semibold">CRM에서 바로 보내기</p>
                     </div>
                     <ol className="space-y-2 ml-4 text-sm">
                       <li className="flex gap-2">
