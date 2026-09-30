@@ -1300,12 +1300,23 @@ export default function StatisticsManagement() {
           break;
         
         case 'newRegistration':
-          // 신규 등록 환자 - 유입일이 해당 월에 정확하게 기재된 환자만 (다른 조건 없음)
-          filteredPatients = patients?.filter(p => {
-            const inflowDate = toDateStr(p.inflow_date);
-            return !!inflowDate && inflowDate >= startOfPeriodStr && inflowDate <= endOfPeriodStr;
-          }) || [];
-          title = `${month2}월 신규 등록 환자 (유입일 기준) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
+          // 신규 등록 = 유입(유입일) + 전화상담/방문상담/실패(상담일)
+          {
+            const inP = (d: string | null) => {
+              const ds = d ? toDateStr(d) : null;
+              return !!ds && ds >= startOfPeriodStr && ds <= endOfPeriodStr;
+            };
+            const seen = new Set<string>();
+            filteredPatients = patients?.filter(p => {
+              if (seen.has(p.id)) return false;
+              let ok = false;
+              if (p.inflow_status === '유입') ok = inP(p.inflow_date);
+              else if (['전화상담', '방문상담', '실패'].includes(p.inflow_status)) ok = inP(p.consultation_date);
+              if (ok) seen.add(p.id);
+              return ok;
+            }) || [];
+          }
+          title = `${month2}월 신규 등록 (유입·전화·방문·실패)`;
           break;
       }
 
@@ -1438,7 +1449,7 @@ export default function StatisticsManagement() {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{totalStats.monthPatients}명</div>
             <CardDescription className="text-xs mt-1">
-              해당 월에 초진관리에 등록된 전체 환자
+              유입 {additionalStats.newRegBreakdown.inflow} + 전화 {additionalStats.newRegBreakdown.phone} + 방문 {additionalStats.newRegBreakdown.visit} + 실패 {additionalStats.newRegBreakdown.failed}
             </CardDescription>
           </CardContent>
         </Card>
@@ -1448,9 +1459,10 @@ export default function StatisticsManagement() {
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{additionalStats.newPatientsThisMonth}명</div>
+            <div className="text-2xl font-bold text-green-600">{additionalStats.inflowAllThisMonth}명</div>
             <CardDescription className="text-xs mt-1">
-              치료동의, 결제완료
+              관리 중 {additionalStats.inflowBreakdown.managed} · 치료종료 {additionalStats.inflowBreakdown.completed} · 아웃 {additionalStats.inflowBreakdown.out}
+              {additionalStats.inflowBreakdown.other > 0 && ` · 기타 ${additionalStats.inflowBreakdown.other}`}
             </CardDescription>
           </CardContent>
         </Card>
@@ -1462,9 +1474,9 @@ export default function StatisticsManagement() {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{additionalStats.treatmentAgreementRate}%</div>
             <CardDescription className="text-xs mt-1">
-              <div className="font-semibold text-foreground/80">(유입 환자 + 치료종료) ÷ 신규 등록 × 100</div>
+              <div className="font-semibold text-foreground/80">유입 ÷ 신규 등록 × 100</div>
               <div className="text-muted-foreground mt-0.5">
-                ({additionalStats.newPatientsThisMonth}명 + {additionalStats.treatmentCompletedThisMonth}명 ÷ {additionalStats.totalNewRegistrations}명)
+                ({additionalStats.inflowAllThisMonth}명 ÷ {additionalStats.totalNewRegistrations}명)
               </div>
             </CardDescription>
           </CardContent>
@@ -1833,7 +1845,7 @@ export default function StatisticsManagement() {
             {statsDialog.type === 'newRegistration' && (
               <div className="mt-2 p-3 bg-amber-50 border-l-4 border-amber-500 rounded">
                 <p className="text-sm font-semibold text-amber-900">
-                  📋 집계 기준: 유입일이 정확히 입력된 환자만 포함됩니다
+                  📋 집계 기준: 유입은 유입일, 전화상담·방문상담·실패는 상담일 기준
                 </p>
                 <p className="text-xs text-amber-700 mt-1">
                   ⚠️ 유입일 미입력 시 통계에서 제외되니 반드시 입력해주세요!
