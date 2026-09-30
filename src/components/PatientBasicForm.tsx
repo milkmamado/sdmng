@@ -845,58 +845,6 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
             />
           </div>
 
-          {/* 진단명 */}
-          <div>
-            <Label htmlFor="diagnosis_category">진단명</Label>
-            <Input
-              id="diagnosis_category"
-              name="diagnosis_category"
-              value={formData.diagnosis_category}
-              placeholder="API에서 자동 입력"
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
-          {/* 진단명 중분류 */}
-          <div>
-            <Label htmlFor="diagnosis_detail">진단명 (중분류)</Label>
-            <Input
-              id="diagnosis_detail"
-              name="diagnosis_detail"
-              value={formData.diagnosis_detail}
-              placeholder="API에서 자동 입력"
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
-          {/* 이전병원 대분류 */}
-          <div>
-            <Label htmlFor="hospital_category">이전병원 (대분류)</Label>
-            <Input
-              id="hospital_category"
-              name="hospital_category"
-              value={formData.hospital_category}
-              placeholder="API에서 자동 입력"
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
-          {/* 이전병원 중분류 */}
-          <div>
-            <Label htmlFor="hospital_branch">이전병원 (중분류)</Label>
-            <Input
-              id="hospital_branch"
-              name="hospital_branch"
-              value={formData.hospital_branch}
-              placeholder="API에서 자동 입력"
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
           {/* 주소 */}
           <div className="md:col-span-2 lg:col-span-3">
             <Label htmlFor="address">주소</Label>
