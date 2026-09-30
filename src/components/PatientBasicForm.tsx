@@ -716,30 +716,10 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
             <Badge variant="secondary">자동</Badge>
           </div>
           {patient && (
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSyncCRM}
-                disabled={syncing || syncingPhone || !patient.customer_number}
-                className="gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? '최신화 중...' : '기본 정보 최신화'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSyncPhoneCRM}
-                disabled={syncing || syncingPhone || !patient.customer_number}
-                className="gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${syncingPhone ? 'animate-spin' : ''}`} />
-                {syncingPhone ? '최신화 중...' : '휴대폰 번호 최신화'}
-              </Button>
-            </div>
+            // 「기본 정보 최신화」「휴대폰 번호 최신화」 버튼 숨김 — handleSyncCRM/handleSyncPhoneCRM 로직은 유지
+            <p className="text-sm text-muted-foreground">
+              CRM 정보는 관리환자 리스트의 「CRM 일괄 동기화」로 최신화됩니다.
+            </p>
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
