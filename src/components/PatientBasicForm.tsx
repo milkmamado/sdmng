@@ -486,8 +486,8 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         duration: 2000,
       });
 
-      // 상담내용이 바뀌었으면 자동 분류 호출 (fire-and-forget, 저장 흐름 차단 안 함)
-      if (updatedFields.counseling_content !== undefined) {
+      // 상담내용 또는 진료메모2(상병코드)가 바뀌었으면 자동 분류 호출 (fire-and-forget, 저장 흐름 차단 안 함)
+      if (updatedFields.counseling_content !== undefined || updatedFields.treatment_memo_2 !== undefined) {
         callClassifyPatient([patient.id]);
       }
 
