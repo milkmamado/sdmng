@@ -406,6 +406,9 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
           const depositTotal = sum('deposit_in', 'amount'), depositUsed = sum('deposit_out', 'amount');
           const rewardTotal = sum('reward_in', 'amount'), rewardUsed = sum('reward_out', 'amount');
           const countTotal = sum('count_in', 'count'), countUsed = sum('count_out', 'count');
+          const paymentAmount = (allTx || [])
+            .filter((x: any) => ['deposit_in', 'inpatient_revenue', 'outpatient_revenue'].includes(x.transaction_type))
+            .reduce((s: number, x: any) => s + (x.amount || 0), 0);
           const { error: upErr } = await supabase.from('package_management').upsert({
             patient_id: patient.id, customer_number: custNo, branch: currentBranch,
             deposit_total: depositTotal, deposit_used: depositUsed, deposit_balance: depositTotal - depositUsed,
@@ -414,7 +417,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
             last_synced_at: new Date().toISOString(),
           }, { onConflict: 'patient_id' });
           if (upErr) throw upErr;
-          const { error: payErr } = await supabase.from('patients').update({ payment_amount: depositTotal }).eq('id', patient.id);
+          const { error: payErr } = await supabase.from('patients').update({ payment_amount: paymentAmount }).eq('id', patient.id);
           if (payErr) throw payErr;
         } catch (e) {
           console.error('패키지 반영 실패:', patient.id, e);

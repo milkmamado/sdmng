@@ -1087,28 +1087,25 @@ export function DailyStatusGrid({
         .eq('patient_id', patientId)
         .eq('is_paid', true);
 
-      // 환자의 payment_amount 가져오기 (패키지 예치금 입금 총액)
-      const { data: patientData } = await supabase
-        .from('patients')
-        .select('payment_amount')
-        .eq('id', patientId)
-        .single();
+      const { data: revenueTransactions } = await supabase
+        .from('package_transactions')
+        .select('transaction_date, amount')
+        .eq('patient_id', patientId)
+        .in('transaction_type', ['deposit_in', 'inpatient_revenue', 'outpatient_revenue']);
 
-      const paymentAmount = patientData?.payment_amount || 0;
+      const monthlyTransactionRevenue = (revenueTransactions || [])
+        .filter(tx => tx.transaction_date >= monthStart && tx.transaction_date <= monthEnd)
+        .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+      const totalTransactionRevenue = (revenueTransactions || [])
+        .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+      const monthlyTreatmentRevenue = (treatmentPlans || [])
+        .filter(tp => tp.payment_date && tp.payment_date >= monthStart && tp.payment_date <= monthEnd)
+        .reduce((sum, tp) => sum + (tp.treatment_amount || 0), 0);
+      const totalTreatmentRevenue = (treatmentPlans || [])
+        .reduce((sum, tp) => sum + (tp.treatment_amount || 0), 0);
 
-      if (treatmentPlans) {
-        // 당월 매출 = 당월 treatment_plans + payment_amount
-        currentMonthStats.revenue = treatmentPlans
-          .filter(tp => tp.payment_date && tp.payment_date >= monthStart && tp.payment_date <= monthEnd)
-          .reduce((sum, tp) => sum + (tp.treatment_amount || 0), 0) + paymentAmount;
-
-        // 전체 매출 = 전체 treatment_plans + payment_amount
-        totalStats.revenue = treatmentPlans.reduce((sum, tp) => sum + (tp.treatment_amount || 0), 0) + paymentAmount;
-      } else {
-        // treatment_plans가 없어도 payment_amount는 포함
-        currentMonthStats.revenue = paymentAmount;
-        totalStats.revenue = paymentAmount;
-      }
+      currentMonthStats.revenue = monthlyTransactionRevenue + monthlyTreatmentRevenue;
+      totalStats.revenue = totalTransactionRevenue + totalTreatmentRevenue;
 
       setPatientStats({
         currentMonth: currentMonthStats,

@@ -187,7 +187,7 @@ export default function CRMBookmarklet() {
             </ul>
           </div>
           <div className="bg-blue-50 border-l-4 border-blue-500 p-3">
-            <p className="text-sm"><strong>수납금액 = 예치금 입금 합계</strong>이며, 사이트 패키지 잔액과 CRM 잔액이 같아야 정상입니다.</p>
+            <p className="text-sm"><strong>수납금액 = 예치금 입금 + 입원·외래 매출 합계</strong>이며, 사이트 패키지 잔액과 CRM 잔액이 같아야 정상입니다.</p>
           </div>
         </CardContent>
       </Card>

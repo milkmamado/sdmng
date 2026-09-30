@@ -441,7 +441,7 @@ export default function UserManual() {
                 </h4>
                 <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
                   <p className="text-sm">
-                    <strong>수납금액 = 예치금 입금</strong>
+                    <strong>수납금액 = 예치금 입금 + 입원·외래 매출 합계</strong>
                   </p>
                   <p className="text-sm mt-2 text-muted-foreground">
                     거래 내역은 환자 상세 팝업에서 확인할 수 있습니다.
@@ -462,7 +462,7 @@ export default function UserManual() {
                     <p className="text-sm text-muted-foreground mt-1">예치금 입금/사용, 적립금 입력/사용, 첩약관리 횟수를 가져오며 별도의 「패키지 연동」 북마크는 사용하지 않습니다.</p>
                   </div>
                   <div className="bg-purple-50 border-l-4 border-purple-500 p-3">
-                    <p className="text-sm"><strong>수납금액 = 예치금 입금 합계</strong></p>
+                    <p className="text-sm"><strong>수납금액 = 예치금 입금 + 입원·외래 매출 합계</strong></p>
                     <p className="text-xs mt-1">적용 전 미리보기의 패키지 잔액 불일치를 확인하세요. 사이트 잔액과 CRM 잔액이 같아야 정상입니다.</p>
                   </div>
                 </div>
@@ -911,18 +911,18 @@ export default function UserManual() {
                   <div className="border rounded-lg p-3">
                     <div className="font-medium mb-1">누적 매출</div>
                     <p className="text-sm text-muted-foreground">
-                      전체 기간 입금 합계
+                      예치금 입금 + 입원·외래 매출
                     </p>
                   </div>
                   <div className="border rounded-lg p-3">
                     <div className="font-medium mb-1">당월 매출</div>
                     <p className="text-sm text-muted-foreground">
-                      선택한 월의 입금 합계
+                      예치금 입금 + 입원·외래 매출
                     </p>
                   </div>
                   <div className="border rounded-lg p-3">
                     <div className="font-medium mb-1">평균 객단가</div>
-                    <p className="text-sm text-muted-foreground">환자 1인당 평균 매출액</p>
+                    <p className="text-sm text-muted-foreground">당월 매출 ÷ 당월 유입(관리 중) 환자 수</p>
                   </div>
                 </div>
               </div>
@@ -933,10 +933,10 @@ export default function UserManual() {
                 <h4 className="font-semibold mb-3">📈 추가 분석 지표</h4>
                 <div className="space-y-2">
                   <div>• <strong>신규 등록:</strong> 유입(유입일) + 전화상담·방문상담·실패(상담일)</div>
-                  <div>• <strong>유입:</strong> 유입상태가 유입인 환자 전체(관리 중·치료종료·아웃·위기 포함)</div>
+                  <div>• <strong>유입:</strong> 선택 월 유입 환자 전체(관리 중·치료종료·아웃·위기 포함)</div>
                   <div>• <strong>치료동의율:</strong> 유입 ÷ 신규 등록 × 100</div>
-                  <div>• <strong>재진관리비율:</strong> 전월 초진 환자 중 당월 활동한 비율</div>
-                  <div>• <strong>통계 매출 카드:</strong> 「입원/외래매출 관리」에서 업로드한 자료 기준</div>
+                  <div>• <strong>재진관리비율:</strong> 전월 유입 환자 중 현재 관리 중·치료종료 비율</div>
+                  <div>• <strong>통계 매출 카드:</strong> 예치금 입금 + 입원·외래 매출</div>
                 </div>
               </div>
 
