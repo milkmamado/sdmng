@@ -13,7 +13,8 @@ import {
   Package,
   UserX,
   FileSpreadsheet,
-  AlertTriangle
+  AlertTriangle,
+  ListTree
 } from "lucide-react";
 import { NavLink, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
