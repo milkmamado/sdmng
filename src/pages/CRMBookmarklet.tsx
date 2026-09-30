@@ -154,6 +154,8 @@ export default function CRMBookmarklet() {
               <p className="font-medium mb-1">① 일괄 동기화</p>
               <p className="text-sm text-muted-foreground">
                 사이트 환자 리스트에서 <strong>「CRM 일괄 동기화」</strong>를 눌러 시작합니다.
+                CRM <strong>입원정보</strong>(입원일·퇴원일)도 함께 가져와
+                <strong>「일별 환자 상태 추적」</strong>에 입원·재원·퇴원으로 자동 반영됩니다.
               </p>
             </div>
             <div className="border rounded-lg p-3">
