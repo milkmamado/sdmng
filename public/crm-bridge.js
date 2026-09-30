@@ -317,7 +317,10 @@
   var hash = location.hash || '';
   try {
     if (hash.indexOf('crm_sync=') !== -1) {
-      runBulkSync(decodeHash('crm_sync'));
+      var syncPayload = decodeHash('crm_sync');
+      // 해시를 지워 같은 탭에서 북마크를 다시 눌러도 일괄 동기화가 또 돌지 않게 함
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+      runBulkSync(syncPayload);
     } else if (hash.indexOf('crm_phone_data=') !== -1) {
       runLegacy(decodeHash('crm_phone_data'), true);
     } else if (hash.indexOf('crm_data=') !== -1) {

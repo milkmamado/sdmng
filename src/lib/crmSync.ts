@@ -67,7 +67,11 @@ export function crmValues(rec: CrmRecord): Record<string, any> {
 export function diffPatient(patient: any, rec: CrmRecord): Record<string, any> {
   const vals = crmValues(rec);
   const changes: Record<string, any> = {};
+  // 상담 기록이 여러 건이면 기존 상담내용을 최신(짧은) 상담으로 덮어쓰지 않음
+  const protectCounseling =
+    Number(rec.cnsl?.count ?? 0) >= 2 && !isEmpty(patient.counseling_content);
   for (const [k, v] of Object.entries(vals)) {
+    if (k === 'counseling_content' && protectCounseling) continue;
     const cur = patient[k];
     if (k === 'last_visit_date') {
       const curDate = cur ? String(cur).slice(0, 10) : null;

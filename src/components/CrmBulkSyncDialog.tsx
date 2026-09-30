@@ -150,7 +150,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
                 <div className="rounded border p-2">변경 없음 <b>{summary.unchanged}</b></div>
                 <div className="rounded border p-2">이름 불일치 <b className="text-destructive">{summary.mismatch}</b></div>
                 <div className="rounded border p-2">CRM 조회 실패 <b>{summary.failed}</b></div>
-                <div className="rounded border p-2">상담기록 2건 이상 <b>{summary.multiCnsl}명</b></div>
+                <div className="rounded border p-2">상담기록 2건 이상 <b>{summary.multiCnsl}명</b> <span className="text-xs text-muted-foreground">(상담내용은 기존 유지)</span></div>
               </div>
 
               {nameMismatch.length > 0 && (
