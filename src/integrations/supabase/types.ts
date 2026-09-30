@@ -85,6 +85,75 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_sync_logs: {
+        Row: {
+          applied_at: string | null
+          apply_failed: number | null
+          branch: string | null
+          created_at: string
+          crm_failed: number | null
+          day_inserts: number | null
+          day_removed: number | null
+          day_updates: number | null
+          field_patients: number | null
+          id: string
+          name_mismatch: number | null
+          pkg_changes: number | null
+          pkg_inserts: number | null
+          pkg_links: number | null
+          started_at: string
+          status: string
+          status_changes: number | null
+          target_count: number | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          apply_failed?: number | null
+          branch?: string | null
+          created_at?: string
+          crm_failed?: number | null
+          day_inserts?: number | null
+          day_removed?: number | null
+          day_updates?: number | null
+          field_patients?: number | null
+          id?: string
+          name_mismatch?: number | null
+          pkg_changes?: number | null
+          pkg_inserts?: number | null
+          pkg_links?: number | null
+          started_at?: string
+          status?: string
+          status_changes?: number | null
+          target_count?: number | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          apply_failed?: number | null
+          branch?: string | null
+          created_at?: string
+          crm_failed?: number | null
+          day_inserts?: number | null
+          day_removed?: number | null
+          day_updates?: number | null
+          field_patients?: number | null
+          id?: string
+          name_mismatch?: number | null
+          pkg_changes?: number | null
+          pkg_inserts?: number | null
+          pkg_links?: number | null
+          started_at?: string
+          status?: string
+          status_changes?: number | null
+          target_count?: number | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       cross_view_grants: {
         Row: {
           created_at: string
