@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllQuery } from '@/lib/fetchAllRows';
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
 import { PatientBasicForm } from "@/components/PatientBasicForm";
@@ -257,7 +258,7 @@ export default function FirstVisitManagement() {
       // 지점 필터 적용
       query = applyBranchFilter(query);
       
-      const { data, error } = await query;
+      const { data, error } = await fetchAllQuery(query);
 
       if (error) throw error;
       setPatients(data || []);

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllQuery } from "@/lib/fetchAllRows";
 import { Users, TrendingUp, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
@@ -178,16 +179,16 @@ export function Dashboard() {
         prevMonthResult,
         missingInflowResult
       ] = await Promise.all([
-        monthNewPatientsQuery,
-        outStatusQuery,
-        outThisMonthQuery,
-        inflowQuery,
-        phoneConsultQuery,
-        visitConsultQuery,
-        failedQuery,
-        treatmentCompletedQuery,
-        prevMonthQuery,
-        missingInflowQuery
+        fetchAllQuery(monthNewPatientsQuery),
+        fetchAllQuery(outStatusQuery),
+        fetchAllQuery(outThisMonthQuery),
+        fetchAllQuery(inflowQuery),
+        fetchAllQuery(phoneConsultQuery),
+        fetchAllQuery(visitConsultQuery),
+        fetchAllQuery(failedQuery),
+        fetchAllQuery(treatmentCompletedQuery),
+        fetchAllQuery(prevMonthQuery),
+        fetchAllQuery(missingInflowQuery)
       ]);
 
       // 에러 체크

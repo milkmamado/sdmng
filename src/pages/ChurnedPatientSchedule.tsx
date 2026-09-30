@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
 import { Button } from "@/components/ui/button";
@@ -178,7 +178,7 @@ export default function ChurnedPatientSchedule() {
       // 지점 필터 적용
       patientsQuery = applyBranchFilter(patientsQuery);
       
-      const { data: patientsData, error: patientsError } = await patientsQuery;
+      const { data: patientsData, error: patientsError } = await fetchAllQuery(patientsQuery);
 
       if (patientsError) throw patientsError;
 

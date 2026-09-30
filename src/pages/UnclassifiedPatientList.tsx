@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery, fetchInChunks } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
@@ -106,7 +106,7 @@ export default function UnclassifiedPatientList() {
 
       patientsQuery = applyBranchFilter(patientsQuery);
 
-      const { data: patientsData, error: patientsError } = await patientsQuery;
+      const { data: patientsData, error: patientsError } = await fetchAllQuery(patientsQuery);
       if (patientsError) throw patientsError;
 
       // 일별 환자 상태 데이터 가져오기 (환자별 활동 여부 확인)
@@ -115,12 +115,12 @@ export default function UnclassifiedPatientList() {
       let dailyStatusMap = new Map<string, boolean>();
       
       if (patientIds.length > 0) {
-        const { data: dailyStatusData } = await fetchAllRows((from, to) => supabase
+        const { data: dailyStatusData } = await fetchInChunks(patientIds, (chunk) => fetchAllRows((from, to) => supabase
           .from('daily_patient_status')
           .select('patient_id')
-          .in('patient_id', patientIds)
+          .in('patient_id', chunk)
           .order('id', { ascending: true })
-          .range(from, to));
+          .range(from, to)));
 
         // 일별 활동이 있는 환자 ID 수집
         const patientsWithActivity = new Set((dailyStatusData || []).map(d => d.patient_id));
