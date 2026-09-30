@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
 import { Button } from "@/components/ui/button";
@@ -210,7 +210,7 @@ export default function DailyStatusTracking() {
       // 지점 필터 적용
       patientsQuery = applyBranchFilter(patientsQuery);
       
-      const { data: patientsData, error: patientsError } = await patientsQuery;
+      const { data: patientsData, error: patientsError } = await fetchAllQuery(patientsQuery);
 
       if (patientsError) throw patientsError;
 
@@ -245,10 +245,10 @@ export default function DailyStatusTracking() {
           .order('status_date', { ascending: true })
           .order('id', { ascending: true })
           .range(from, to)),
-        supabase
+        fetchAllQuery(supabase
           .from('package_transactions')
           .select('transaction_date, amount, transaction_type')
-          .in('transaction_type', ['deposit_in', 'inpatient_revenue', 'outpatient_revenue'])
+          .in('transaction_type', ['deposit_in', 'inpatient_revenue', 'outpatient_revenue']))
       ]);
 
       const allStatusData = allStatusResult.data;

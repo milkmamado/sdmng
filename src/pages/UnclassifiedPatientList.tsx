@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery, fetchInChunks } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
@@ -106,7 +106,7 @@ export default function UnclassifiedPatientList() {
 
       patientsQuery = applyBranchFilter(patientsQuery);
 
-      const { data: patientsData, error: patientsError } = await patientsQuery;
+      const { data: patientsData, error: patientsError } = await fetchAllQuery(patientsQuery);
       if (patientsError) throw patientsError;
 
       // 일별 환자 상태 데이터 가져오기 (환자별 활동 여부 확인)

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Download, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -61,15 +61,15 @@ export function DataMigration() {
         patientStatusOptionsRes,
         treatmentDetailOptionsRes
       ] = await Promise.all([
-        supabase.from('patients').select('*'),
+        fetchAllQuery(supabase.from('patients').select('*')),
         fetchAllRows((from, to) => supabase.from('daily_patient_status').select('*').order('id', { ascending: true }).range(from, to)),
-        supabase.from('admission_cycles').select('*'),
+        fetchAllQuery(supabase.from('admission_cycles').select('*')),
         supabase.from('medical_info').select('*'),
         supabase.from('packages').select('*'),
-        supabase.from('package_management').select('*'),
-        supabase.from('package_transactions').select('*'),
+        fetchAllQuery(supabase.from('package_management').select('*')),
+        fetchAllQuery(supabase.from('package_transactions').select('*')),
         supabase.from('treatment_history').select('*'),
-        supabase.from('treatment_plans').select('*'),
+        fetchAllQuery(supabase.from('treatment_plans').select('*')),
         supabase.from('patient_notes').select('*'),
         supabase.from('patient_reconnect_tracking').select('*'),
         supabase.from('profiles').select('*'),
