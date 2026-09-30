@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -347,17 +348,16 @@ export default function StatisticsManagement() {
       // 2-1. 해당 기간의 일별 상태 가져오기
       // ⚠️ 매니저별 분포는 patient.assigned_manager 를 통해 나누기 때문에
       // 여기서는 매니저로 미리 필터하지 않고, 지점/기간 기준으로만 가져온다.
-      let dailyStatusesQuery = supabase
-        .from('daily_patient_status')
-        .select('patient_id, status_type, status_date')
-        .gte('status_date', queryStartDate)
-        .lte('status_date', queryEndDate)
-        .order('status_date', { ascending: false });
-
-      // 지점 필터 적용
-      dailyStatusesQuery = applyBranchFilter(dailyStatusesQuery);
-
-      const { data: dailyStatuses, error: statusError } = await dailyStatusesQuery;
+      // 지점 필터 적용 (1000행 제한 회피를 위해 페이지네이션)
+      const { data: dailyStatuses, error: statusError } = await fetchAllRows((from, to) => applyBranchFilter(
+        supabase
+          .from('daily_patient_status')
+          .select('patient_id, status_type, status_date')
+          .gte('status_date', queryStartDate)
+          .lte('status_date', queryEndDate)
+          .order('status_date', { ascending: false })
+          .order('id', { ascending: true })
+      ).range(from, to));
 
       if (statusError) throw statusError;
 
