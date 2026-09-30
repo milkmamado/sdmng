@@ -12,7 +12,10 @@ export interface CrmRecord {
     fsCmhsDt?: string; lstCmhsDt?: string;
   };
   cnsl?: { cnslCnts?: string | null; cnslDate?: string | null; cnslHm?: string | null; count?: number };
+  adms?: CrmAdmsRow[] | null;
 }
+
+export interface CrmAdmsRow { admsDate?: string; dschDate?: string; admsYn?: string; wardNm?: string; roomNm?: string }
 
 export const FIELD_LABELS: Record<string, string> = {
   phone: '휴대폰번호',
@@ -118,3 +121,83 @@ export function decodeHashPayload(encoded: string): any {
 export function encodeHashPayload(obj: any): string {
   return btoa(encodeURIComponent(JSON.stringify(obj)));
 }
+
+// ---------- 입원정보 → 일별 환자 상태 ----------
+export const ADMS_SYNC_START = '2026-05-01';
+export const ADMISSION_TYPES = ['입원', '재원', '퇴원'] as const;
+export type AdmissionType = '입원' | '재원' | '퇴원';
+const ADM_PRIORITY: Record<AdmissionType, number> = { 입원: 3, 재원: 2, 퇴원: 1 };
+
+const fmtLocal = (dt: Date) =>
+  `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+/** 브라우저 로컬 날짜 yyyy-MM-dd */
+export function localToday(): string {
+  return fmtLocal(new Date());
+}
+
+/** yyyy-MM-dd 문자열에 n일 더하기 (로컬 기준, UTC 파싱 없음) */
+export function addDaysStr(s: string, n: number): string {
+  const [y, m, d] = s.split('-').map(Number);
+  return fmtLocal(new Date(y, m - 1, d + n));
+}
+
+export interface AdmissionPlan {
+  days: Map<string, AdmissionType>;
+  isAdmittedNow: boolean;
+  /** 가장 마지막 입원(오늘 이전 시작)의 퇴원일 — 현재 재원이거나 퇴원 전이면 null */
+  lastDischargeDate: string | null;
+  /** ADMS_SYNC_START 이후 입원 기록이 있는지 */
+  hasRecentAdmission: boolean;
+}
+
+export function buildAdmissionDays(adms: CrmAdmsRow[] | null | undefined, today: string): AdmissionPlan {
+  const days = new Map<string, AdmissionType>();
+  const put = (date: string, t: AdmissionType) => {
+    if (date > today || date < ADMS_SYNC_START) return;
+    const cur = days.get(date);
+    if (!cur || ADM_PRIORITY[t] > ADM_PRIORITY[cur]) days.set(date, t);
+  };
+  let isAdmittedNow = false;
+  let hasRecentAdmission = false;
+  let last: { a: string; d: string | null; discharged: boolean } | null = null;
+  for (const row of adms || []) {
+    const a = crmDate(row.admsDate);
+    const d = crmDate(row.dschDate);
+    if (!a || a > today) continue;
+    const discharged = row.admsYn === '퇴원' && !!d && d >= a;
+    if (row.admsYn !== '퇴원') isAdmittedNow = true;
+    if (a >= ADMS_SYNC_START || (d && d >= ADMS_SYNC_START)) hasRecentAdmission = true;
+    if (!last || a > last.a) last = { a, d, discharged };
+    put(a, '입원');
+    const stayEnd = discharged ? addDaysStr(d!, -1) : today;
+    for (let x = addDaysStr(a, 1); x <= stayEnd && x <= today; x = addDaysStr(x, 1)) put(x, '재원');
+    if (discharged && d! > a && d! <= today) put(d!, '퇴원');
+  }
+  const lastDischargeDate =
+    last && last.discharged && !isAdmittedNow && last.d! <= today ? last.d : null;
+  return { days, isAdmittedNow, lastDischargeDate, hasRecentAdmission };
+}
+
+export interface DailyDiff {
+  inserts: { date: string; type: AdmissionType }[];
+  updates: { date: string; from: string; to: AdmissionType }[];
+  conflicts: { date: string; existing: string; crm: AdmissionType }[];
+}
+
+/** CRM 기간 밖의 기존 값은 절대 건드리지 않음 */
+export function diffDailyStatus(planDays: Map<string, AdmissionType>, existing: Map<string, string>): DailyDiff {
+  const out: DailyDiff = { inserts: [], updates: [], conflicts: [] };
+  const dates = Array.from(planDays.keys()).sort();
+  for (const date of dates) {
+    const t = planDays.get(date)!;
+    const cur = existing.get(date);
+    if (!cur) out.inserts.push({ date, type: t });
+    else if (cur === t) continue;
+    else if ((ADMISSION_TYPES as readonly string[]).includes(cur)) out.updates.push({ date, from: cur, to: t });
+    else out.conflicts.push({ date, existing: cur, crm: t });
+  }
+  return out;
+}
+
+export const mdLabel = (s: string) => `${Number(s.slice(5, 7))}/${Number(s.slice(8, 10))}`;
