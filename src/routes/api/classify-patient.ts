@@ -204,6 +204,15 @@ export const Route = createFileRoute('/api/classify-patient')({
                   updatePayload[reviewField] = false;
                 } else {
                   // 규칙 실패 → AI 폴백
+                  // 이미 AI 제안이 걸려 있고 원문이 그대로면 AI를 다시 부르지 않음
+                  const currentRaw = (p as any)[rawField];
+                  const reuseExistingAi =
+                    (p as any)[sourceField] === 'ai' &&
+                    (p as any)[reviewField] === true &&
+                    r.raw != null &&
+                    currentRaw === r.raw;
+                  if (reuseExistingAi) continue;
+
                   try {
                     const ai = await classifyWithAI(
                       kind,
@@ -211,6 +220,8 @@ export const Route = createFileRoute('/api/classify-patient')({
                       isDx ? dxMap.categories : hsMap.categories,
                       isDx ? dxMap.detailsByParent : hsMap.detailsByParent,
                     );
+                    // AI도 아무것도 못 찾고 규칙 raw도 없으면 아무것도 바꾸지 않음
+                    if (!ai.category && !ai.raw && !r.raw) continue;
                     if (ai.category) {
                       updatePayload[catField] = ai.category;
                       updatePayload[detField] = ai.detail;
@@ -219,10 +230,12 @@ export const Route = createFileRoute('/api/classify-patient')({
                     updatePayload[sourceField] = 'ai';
                     updatePayload[reviewField] = true;
                   } catch (aiErr) {
-                    // AI 실패: raw만 저장하고 확인 필요 표시
+                    // AI 실패: 규칙 raw가 있을 때만 raw 저장 + 확인 필요 표시
                     console.error(`AI classify failed (${kind}, patient ${p.id}):`, aiErr);
-                    if (r.raw) updatePayload[rawField] = r.raw;
-                    updatePayload[reviewField] = true;
+                    if (r.raw) {
+                      updatePayload[rawField] = r.raw;
+                      updatePayload[reviewField] = true;
+                    }
                   }
                 }
               }
