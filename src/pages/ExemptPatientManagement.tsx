@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllQuery } from '@/lib/fetchAllRows';
 import { useBranchFilter } from "@/hooks/useBranchFilter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -175,7 +176,7 @@ export default function ExemptPatientManagement() {
 
       query = applyBranchFilter(query);
 
-      const { data, error } = await query;
+      const { data, error } = await fetchAllQuery(query);
 
       if (error) throw error;
 
