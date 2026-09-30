@@ -1016,8 +1016,9 @@ export default function UserManual() {
                    <li>• 정리 대상은 체크할 때만 삭제하고, CRM에 없는 기존 패키지 거래는 삭제하지 않습니다.</li>
                    <li>• 치료종료는 기본 해제, 입원 중 아웃→관리 중과 패키지 거래 반영은 기본 체크입니다.</li>
                    <li>• 패키지 잔액 불일치와 종류 미정 패키지를 확인합니다.</li>
-                 </ul>
-               </div>
+                  </ul>
+                  <p className="text-sm text-muted-foreground mt-3">마스터·관리자는 「CRM 동기화 기록」에서 실장별 마지막 동기화 일시와 적용 내역을 확인할 수 있습니다.</p>
+                </div>
 
                <Separator />
 

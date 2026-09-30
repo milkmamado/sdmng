@@ -85,6 +85,34 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
   const [unclearList, setUnclearList] = useState<string[]>([]);
   const recordsRef = useRef<CrmRecord[]>([]);
   const targetsRef = useRef<any[]>([]);
+  // CRM 동기화 기록(crm_sync_logs) — 실패해도 동기화 흐름은 막지 않음
+  const logIdRef = useRef<string | null>(null);
+  const branchRef = useRef<any>(currentBranch);
+  branchRef.current = currentBranch;
+  const writeLog = async (fields: Record<string, any>) => {
+    try {
+      const db = supabase as any;
+      if (logIdRef.current) {
+        const { error } = await db.from('crm_sync_logs').update(fields).eq('id', logIdRef.current);
+        if (error) throw error;
+        return;
+      }
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u?.user?.id;
+      let userName: string | null = null;
+      if (uid) {
+        const { data: prof } = await db.from('profiles').select('name').eq('id', uid).maybeSingle();
+        userName = prof?.name || u?.user?.email || null;
+      }
+      const { data, error } = await db.from('crm_sync_logs')
+        .insert({ user_name: userName, branch: branchRef.current || null, ...fields })
+        .select('id').single();
+      if (error) throw error;
+      logIdRef.current = data?.id || null;
+    } catch (e) {
+      console.warn('CRM 동기화 기록 저장 실패:', e);
+    }
+  };
 
   const reset = () => {
     setSummary(null); setPlanned([]); setNameMismatch([]); setApplyResult(null);
@@ -275,6 +303,16 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
     });
     setComparing(false);
     setWaiting(false);
+    logIdRef.current = null;
+    void writeLog({
+      status: 'previewed',
+      target_count: done.total ?? looked,
+      crm_failed: failed,
+      name_mismatch: mismatch.length,
+      field_patients: plans.filter((p) => Object.keys(p.changes).length > 0).length,
+      day_inserts: dIns, day_updates: dUpd, day_removed: dRem,
+      pkg_inserts: pIns, pkg_links: pLink, pkg_changes: pChg,
+    });
   };
 
   useEffect(() => {
@@ -359,10 +397,12 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
     const statusUpdates: { id: string; status: string }[] = [];
     if (doEnd) endTargets.forEach((p) => statusUpdates.push({ id: p.id, status: '치료종료' }));
     if (doOut) outTargets.forEach((p) => statusUpdates.push({ id: p.id, status: '관리 중' }));
+    let statusOk = 0;
     for (const u of statusUpdates) {
       try {
         const { error } = await supabase.from('patients').update({ management_status: u.status }).eq('id', u.id);
         if (error) throw error;
+        statusOk++;
       } catch (e) {
         console.error('관리상태 변경 실패:', u.id, e);
         failed++;
@@ -431,6 +471,14 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
       for (let i = 0; i < classifyIds.length; i += 10) await callClassifyPatient(classifyIds.slice(i, i + 10));
     })();
     setApplyResult({ ok, failed, daysSaved, daysFailed, removed, removeFailed, pIns, pLink, pChg, pFail });
+    // 일별 칸은 실제 저장 칸수(daysSaved)를 day_inserts 에 기록, day_updates 는 0
+    void writeLog({
+      status: 'applied', applied_at: new Date().toISOString(),
+      field_patients: ok, day_inserts: daysSaved, day_updates: 0, day_removed: removed,
+      pkg_inserts: pIns, pkg_links: pLink, pkg_changes: pChg,
+      status_changes: statusOk,
+      apply_failed: failed + daysFailed + removeFailed + pFail,
+    });
     setApplying(false);
     onApplied?.();
     toast({ title: 'CRM 동기화 적용 완료', description: `성공 ${ok}명 · 실패 ${failed}명 · 일별상태 저장 ${daysSaved}칸 · 실패 ${daysFailed}명 · 정리 ${removed}칸 · 패키지 추가 ${pIns}건 · 연결 ${pLink}건 · 변경 ${pChg}건 · 실패 ${pFail}명` });
