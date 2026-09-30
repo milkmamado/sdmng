@@ -55,10 +55,13 @@ export function crmValues(rec: CrmRecord): Record<string, any> {
   if (!isEmpty(b.rmk2)) out.special_note_2 = b.rmk2;
   if (!isEmpty(b.mdcrMemoCnts1)) out.treatment_memo_1 = b.mdcrMemoCnts1;
   if (!isEmpty(b.mdcrMemoCnts2)) out.treatment_memo_2 = b.mdcrMemoCnts2;
+  // 입원 환자는 CRM에서 퇴원 예정일처럼 미래 날짜가 올 수 있으므로 오늘(로컬 기준)보다 늦으면 오늘로 제한
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const fs = crmDate(b.fsCmhsDt);
-  if (fs) out.first_visit_date = fs;
+  if (fs) out.first_visit_date = fs > today ? today : fs;
   const ls = crmDate(b.lstCmhsDt);
-  if (ls) out.last_visit_date = ls;
+  if (ls) out.last_visit_date = ls > today ? today : ls;
   if (!isEmpty(rec.cnsl?.cnslCnts)) out.counseling_content = rec.cnsl!.cnslCnts;
   return out;
 }
