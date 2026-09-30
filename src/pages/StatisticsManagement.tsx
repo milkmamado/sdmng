@@ -29,6 +29,22 @@ interface ManagerStats {
   };
 }
 
+// ---- 날짜 비교 헬퍼: 'yyyy-MM-dd' 문자열 비교 ----
+// new Date('2026-08-31')은 UTC 자정으로 파싱되어 한국 시간 기준으로 하루가 밀리는 문제를 피함
+const pad2 = (n: number) => String(n).padStart(2, '0');
+// Date → 로컬 기준 'yyyy-MM-dd'
+const localDateStr = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+// m: 1-based 월. 그 달의 첫날/말일을 로컬 기준 'yyyy-MM-dd'로
+const monthStartStr = (y: number, m: number) => `${y}-${pad2(m)}-01`;
+const monthEndStr = (y: number, m: number) => localDateStr(new Date(y, m, 0));
+// date 컬럼(inflow_date 등)은 그대로, created_at 같은 timestamptz는 한국 시간 기준 'yyyy-MM-dd'로
+const toDateStr = (v: any) => {
+  if (!v) return null;
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  return new Date(s).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+};
+
 export default function StatisticsManagement() {
   const { user } = useAuth();
   const { applyBranchFilter } = useBranchFilter();
@@ -273,8 +289,8 @@ export default function StatisticsManagement() {
       
       const monthNewPatients = allMonthPatients?.filter(p => {
         if (!p.inflow_date) return false;
-        const inflowDate = new Date(p.inflow_date);
-        const included = inflowDate >= selectedMonthStart && inflowDate <= endDate;
+        const inflowDate = toDateStr(p.inflow_date);
+        const included = inflowDate !== null && inflowDate >= queryStartDate && inflowDate <= queryEndDate;
         return included;
       });
       
@@ -298,8 +314,8 @@ export default function StatisticsManagement() {
       
       // 선택한 월에 유입된 환자만 필터링 (11월 관리 환자)
       const totalPatientsFiltered = totalPatientsData?.filter(p => {
-        const inflowDate = new Date(p.inflow_date);
-        return inflowDate >= selectedMonthStart && inflowDate <= endDate;
+        const inflowDate = toDateStr(p.inflow_date);
+        return inflowDate !== null && inflowDate >= queryStartDate && inflowDate <= queryEndDate;
       });
       const totalPatientsCount = totalPatientsFiltered?.length || 0;
 
@@ -640,8 +656,8 @@ export default function StatisticsManagement() {
         const { data: managerInflowPatients } = await managerInflowQuery;
         
         const managerNewPatientsCount = managerInflowPatients?.filter(p => {
-          const refDate = p.inflow_date ? new Date(p.inflow_date) : new Date(p.created_at);
-          return refDate >= selectedMonthStart && refDate <= endDate;
+          const refDate = toDateStr(p.inflow_date) || toDateStr(p.created_at);
+          return refDate !== null && refDate >= queryStartDate && refDate <= queryEndDate;
         }).length || 0;
         
         managerInflowCountMap.set(managerId, managerNewPatientsCount);
@@ -735,17 +751,18 @@ export default function StatisticsManagement() {
 
       // ===== 새로운 통계 계산 - 모든 쿼리 병렬 실행 =====
       
-      // 전월 계산 (재진관리비율용)
-      const [prevYear, prevMonth] = selectedMonth.split('-').map(Number);
-      const prevMonthStart = new Date(prevYear, prevMonth - 2, 1);
-      const prevMonthEnd = new Date(prevYear, prevMonth - 1, 0);
+      // 전월 계산 (재진관리비율용) — 문자열 'yyyy-MM-dd' 비교 (로컬 기준)
+      const prevM = month - 1 === 0 ? 12 : month - 1;
+      const prevY = month - 1 === 0 ? year - 1 : year;
+      const prevMonthStartStr = monthStartStr(prevY, prevM);
+      const prevMonthEndStr = monthEndStr(prevY, prevM);
 
-      // 관리 기간 계산용
-      const periodMonthEnd = new Date(year, month, 0);
-      const oneMonthAgoPeriod = new Date(year, month - 1, 0);
-      const twoMonthsAgoPeriod = new Date(year, month - 2, 0);
-      const threeMonthsAgoPeriod = new Date(year, month - 3, 0);
-      const sixMonthsAgoPeriod = new Date(year, month - 6, 0);
+      // 관리 기간 계산용 — 문자열 'yyyy-MM-dd' 비교 (로컬 기준)
+      const periodMonthEndStr = monthEndStr(year, month);
+      const oneMonthAgoPeriodStr = monthEndStr(year, month - 1);
+      const twoMonthsAgoPeriodStr = monthEndStr(year, month - 2);
+      const threeMonthsAgoPeriodStr = monthEndStr(year, month - 3);
+      const sixMonthsAgoPeriodStr = monthEndStr(year, month - 6);
 
       // 매니저 필터 조건
       const shouldFilterByManager = !isMasterOrAdmin || (selectedManager !== 'all' && selectedManager);
@@ -876,15 +893,15 @@ export default function StatisticsManagement() {
       const outThisMonthPatients = outThisMonthResult.data;
       const outPatientsThisMonthCount = outThisMonthPatients?.filter(p => {
         if (!p.inflow_date) return false;
-        const inflowDate = new Date(p.inflow_date);
-        return inflowDate >= selectedMonthStart && inflowDate <= endDate;
+        const inflowDate = toDateStr(p.inflow_date);
+        return inflowDate !== null && inflowDate >= queryStartDate && inflowDate <= queryEndDate;
       }).length || 0;
 
       // 3. 유입 환자
       const inflowPatients = inflowResult.data;
       const newPatientsCount = inflowPatients?.filter(p => {
-        const inflowDate = new Date(p.inflow_date);
-        return inflowDate >= selectedMonthStart && inflowDate <= endDate;
+        const inflowDate = toDateStr(p.inflow_date);
+        return inflowDate !== null && inflowDate >= queryStartDate && inflowDate <= queryEndDate;
       }).length || 0;
 
       // 객단가를 newPatientsCount(해당 월 유입환자) 기준으로 계산
@@ -901,36 +918,36 @@ export default function StatisticsManagement() {
       // 4. 전화상담 환자
       const phoneConsultPatients = phoneConsultResult.data;
       const phoneConsultCount = phoneConsultPatients?.filter(p => {
-        const consultDate = new Date(p.consultation_date!);
-        return consultDate >= selectedMonthStart && consultDate <= endDate;
+        const consultDate = toDateStr(p.consultation_date!);
+        return consultDate !== null && consultDate >= queryStartDate && consultDate <= queryEndDate;
       }).length || 0;
 
       // 5. 방문상담 환자
       const visitConsultPatients = visitConsultResult.data;
       const visitConsultCount = visitConsultPatients?.filter(p => {
-        const consultDate = new Date(p.consultation_date!);
-        return consultDate >= selectedMonthStart && consultDate <= endDate;
+        const consultDate = toDateStr(p.consultation_date!);
+        return consultDate !== null && consultDate >= queryStartDate && consultDate <= queryEndDate;
       }).length || 0;
 
       // 6. 실패 환자
       const failedPatients = failedResult.data;
       const failedCount = failedPatients?.filter(p => {
-        const consultDate = new Date(p.consultation_date!);
-        return consultDate >= selectedMonthStart && consultDate <= endDate;
+        const consultDate = toDateStr(p.consultation_date!);
+        return consultDate !== null && consultDate >= queryStartDate && consultDate <= queryEndDate;
       }).length || 0;
 
       // 7. 치료종료 환자
       const treatmentCompletedPatients = treatmentCompletedResult.data;
       const treatmentCompletedCount = treatmentCompletedPatients?.filter(p => {
-        const inflowDate = new Date(p.inflow_date!);
-        return inflowDate >= selectedMonthStart && inflowDate <= endDate;
+        const inflowDate = toDateStr(p.inflow_date!);
+        return inflowDate !== null && inflowDate >= queryStartDate && inflowDate <= queryEndDate;
       }).length || 0;
 
       // 8. 재진관리비율 계산
       const prevMonthPatientsData = prevMonthResult.data;
       const prevMonthPatients = prevMonthPatientsData?.filter(p => {
-        const inflowDate = new Date(p.inflow_date);
-        return inflowDate >= prevMonthStart && inflowDate <= prevMonthEnd;
+        const inflowDate = toDateStr(p.inflow_date);
+        return inflowDate !== null && inflowDate >= prevMonthStartStr && inflowDate <= prevMonthEndStr;
       }) || [];
 
       const retainedPatients = prevMonthPatients.filter(p => 
@@ -944,23 +961,23 @@ export default function StatisticsManagement() {
       const activePatients = managedPatientsResult.data;
       
       const patients1MonthPlus = (activePatients || []).filter(p => {
-        const inflowDate = new Date(p.inflow_date);
-        return inflowDate >= oneMonthAgoPeriod && inflowDate < periodMonthEnd;
+        const inflowDate = toDateStr(p.inflow_date);
+        return inflowDate !== null && inflowDate >= oneMonthAgoPeriodStr && inflowDate < periodMonthEndStr;
       }).length;
 
       const patients2MonthPlus = (activePatients || []).filter(p => {
-        const inflowDate = new Date(p.inflow_date);
-        return inflowDate >= twoMonthsAgoPeriod && inflowDate < oneMonthAgoPeriod;
+        const inflowDate = toDateStr(p.inflow_date);
+        return inflowDate !== null && inflowDate >= twoMonthsAgoPeriodStr && inflowDate < oneMonthAgoPeriodStr;
       }).length;
 
       const patients3MonthPlus = (activePatients || []).filter(p => {
-        const inflowDate = new Date(p.inflow_date);
-        return inflowDate >= threeMonthsAgoPeriod && inflowDate < twoMonthsAgoPeriod;
+        const inflowDate = toDateStr(p.inflow_date);
+        return inflowDate !== null && inflowDate >= threeMonthsAgoPeriodStr && inflowDate < twoMonthsAgoPeriodStr;
       }).length;
 
       const patients6MonthPlus = (activePatients || []).filter(p => {
-        const inflowDate = new Date(p.inflow_date);
-        return inflowDate < sixMonthsAgoPeriod;
+        const inflowDate = toDateStr(p.inflow_date);
+        return inflowDate !== null && inflowDate < sixMonthsAgoPeriodStr;
       }).length;
 
       // 10. 치료동의율 계산
@@ -1032,31 +1049,31 @@ export default function StatisticsManagement() {
     try {
       // 선택한 월의 말일 기준으로 계산
       const [selectedYear, selectedMonthNum] = selectedMonth.split('-').map(Number);
-      const periodMonthEnd = new Date(selectedYear, selectedMonthNum, 0); // 선택한 월의 마지막 날
-      const oneMonthAgoPeriod = new Date(selectedYear, selectedMonthNum - 1, 0); // 1개월 전 말일
-      const twoMonthsAgoPeriod = new Date(selectedYear, selectedMonthNum - 2, 0); // 2개월 전 말일
-      const threeMonthsAgoPeriod = new Date(selectedYear, selectedMonthNum - 3, 0); // 3개월 전 말일
-      const sixMonthsAgoPeriod = new Date(selectedYear, selectedMonthNum - 6, 0); // 6개월 전 말일
+      const periodMonthEndStr = monthEndStr(selectedYear, selectedMonthNum); // 선택한 월의 마지막 날
+      const oneMonthAgoPeriodStr = monthEndStr(selectedYear, selectedMonthNum - 1); // 1개월 전 말일
+      const twoMonthsAgoPeriodStr = monthEndStr(selectedYear, selectedMonthNum - 2); // 2개월 전 말일
+      const threeMonthsAgoPeriodStr = monthEndStr(selectedYear, selectedMonthNum - 3); // 3개월 전 말일
+      const sixMonthsAgoPeriodStr = monthEndStr(selectedYear, selectedMonthNum - 6); // 6개월 전 말일
       
-      let startDate: Date;
-      let endDate: Date;
+      let startDateStr: string;
+      let endDateStr: string;
       
       if (period === '1month') {
         // 1개월 이상: 1개월 전 말일 <= 유입일 < 선택한 월 말일
-        startDate = oneMonthAgoPeriod;
-        endDate = periodMonthEnd;
+        startDateStr = oneMonthAgoPeriodStr;
+        endDateStr = periodMonthEndStr;
       } else if (period === '2month') {
         // 2개월 이상: 2개월 전 말일 <= 유입일 < 1개월 전 말일
-        startDate = twoMonthsAgoPeriod;
-        endDate = oneMonthAgoPeriod;
+        startDateStr = twoMonthsAgoPeriodStr;
+        endDateStr = oneMonthAgoPeriodStr;
       } else if (period === '3month') {
         // 3개월 이상: 3개월 전 말일 <= 유입일 < 2개월 전 말일
-        startDate = threeMonthsAgoPeriod;
-        endDate = twoMonthsAgoPeriod;
+        startDateStr = threeMonthsAgoPeriodStr;
+        endDateStr = twoMonthsAgoPeriodStr;
       } else {
         // 6개월 이상: 유입일 < 6개월 전 말일
-        startDate = new Date(1900, 0, 1); // 매우 오래된 날짜
-        endDate = sixMonthsAgoPeriod;
+        startDateStr = '1900-01-01'; // 매우 오래된 날짜
+        endDateStr = sixMonthsAgoPeriodStr;
       }
       
       // 환자 데이터 조회 - 권한별로 필터링
@@ -1091,8 +1108,8 @@ export default function StatisticsManagement() {
 
       // 클라이언트 측에서 날짜 필터링 - 독립 구간
       const filteredPatients = (allPatients || []).filter(patient => {
-        const inflowDate = new Date(patient.inflow_date);
-        return inflowDate >= startDate && inflowDate < endDate;
+        const inflowDate = toDateStr(patient.inflow_date);
+        return inflowDate !== null && inflowDate >= startDateStr && inflowDate < endDateStr;
       });
 
       setSelectedPeriodDialog({
@@ -1125,8 +1142,8 @@ export default function StatisticsManagement() {
       const [year2, month2] = selectedMonth.split('-').map(Number);
       const today2 = new Date();
       const isCurrentMonth2 = today2.getFullYear() === year2 && today2.getMonth() === month2 - 1;
-      const startOfPeriod = new Date(year2, month2 - 1, 1);
-      const endOfPeriod = isCurrentMonth2 ? today2 : new Date(year2, month2, 0);
+      const startOfPeriodStr = monthStartStr(year2, month2);
+      const endOfPeriodStr = isCurrentMonth2 ? localDateStr(today2) : monthEndStr(year2, month2);
 
       let query = applyBranchFilter(supabase.from('patients').select('*'));
       
@@ -1167,14 +1184,14 @@ export default function StatisticsManagement() {
             // 전화상담 또는 방문상담
             if (p.inflow_status === '전화상담' || p.inflow_status === '방문상담') {
               if (!p.consultation_date) return false;
-              const consultDate = new Date(p.consultation_date);
-              return consultDate >= startOfPeriod && consultDate <= endOfPeriod;
+              const consultDate = toDateStr(p.consultation_date);
+              return consultDate !== null && consultDate >= startOfPeriodStr && consultDate <= endOfPeriodStr;
             }
             // 유입, 실패, 치료종료 등
             else {
               if (!p.inflow_date) return false;
-              const inflowDate = new Date(p.inflow_date);
-              return inflowDate >= startOfPeriod && inflowDate <= endOfPeriod;
+              const inflowDate = toDateStr(p.inflow_date);
+              return inflowDate !== null && inflowDate >= startOfPeriodStr && inflowDate <= endOfPeriodStr;
             }
           }) || [];
           title = `${month2}월 아웃/아웃위기 환자 (등록일 기준) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
@@ -1186,8 +1203,8 @@ export default function StatisticsManagement() {
             if (p.inflow_status !== '유입') return false;
             if (p.management_status !== '관리 중') return false;
             if (!p.inflow_date) return false; // 유입일이 반드시 있어야 함
-            const inflowDate = new Date(p.inflow_date);
-            return inflowDate >= startOfPeriod && inflowDate <= endOfPeriod;
+            const inflowDate = toDateStr(p.inflow_date);
+            return inflowDate !== null && inflowDate >= startOfPeriodStr && inflowDate <= endOfPeriodStr;
           }) || [];
           title = `${month2}월 유입 환자 (유입상태/관리 중) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
           break;
@@ -1197,8 +1214,8 @@ export default function StatisticsManagement() {
           filteredPatients = patients?.filter(p => {
             if (p.inflow_status !== '전화상담') return false;
             if (!p.consultation_date) return false; // 상담일이 반드시 있어야 함
-            const consultDate = new Date(p.consultation_date);
-            return consultDate >= startOfPeriod && consultDate <= endOfPeriod;
+            const consultDate = toDateStr(p.consultation_date);
+            return consultDate !== null && consultDate >= startOfPeriodStr && consultDate <= endOfPeriodStr;
           }) || [];
           title = `${month2}월 전화상담 환자 (상담일 기준) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
           break;
@@ -1208,8 +1225,8 @@ export default function StatisticsManagement() {
           filteredPatients = patients?.filter(p => {
             if (p.inflow_status !== '방문상담') return false;
             if (!p.consultation_date) return false; // 상담일이 반드시 있어야 함
-            const consultDate = new Date(p.consultation_date);
-            return consultDate >= startOfPeriod && consultDate <= endOfPeriod;
+            const consultDate = toDateStr(p.consultation_date);
+            return consultDate !== null && consultDate >= startOfPeriodStr && consultDate <= endOfPeriodStr;
           }) || [];
           title = `${month2}월 방문상담 환자 (상담일 기준) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
           break;
@@ -1219,8 +1236,8 @@ export default function StatisticsManagement() {
           filteredPatients = patients?.filter(p => {
             if (p.inflow_status !== '실패') return false;
             if (!p.consultation_date) return false; // 상담일이 반드시 있어야 함
-            const consultDate = new Date(p.consultation_date);
-            return consultDate >= startOfPeriod && consultDate <= endOfPeriod;
+            const consultDate = toDateStr(p.consultation_date);
+            return consultDate !== null && consultDate >= startOfPeriodStr && consultDate <= endOfPeriodStr;
           }) || [];
           title = `${month2}월 실패 환자 (상담일 기준) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
           break;
@@ -1231,8 +1248,8 @@ export default function StatisticsManagement() {
             if (p.inflow_status !== '유입') return false;
             if (p.management_status !== '치료종료') return false;
             if (!p.inflow_date) return false; // 유입일이 반드시 있어야 함
-            const inflowDate = new Date(p.inflow_date);
-            return inflowDate >= startOfPeriod && inflowDate <= endOfPeriod;
+            const inflowDate = toDateStr(p.inflow_date);
+            return inflowDate !== null && inflowDate >= startOfPeriodStr && inflowDate <= endOfPeriodStr;
           }) || [];
           title = `${month2}월 치료종료 환자 (유입일 기준) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
           break;
@@ -1251,11 +1268,10 @@ export default function StatisticsManagement() {
         
         case 'newRegistration':
           // 신규 등록 환자 - 유입일이 해당 월에 정확하게 기재된 환자만 (다른 조건 없음)
-          filteredPatients = patients?.filter(p => 
-            p.inflow_date && // 유입일이 반드시 있어야 함
-            new Date(p.inflow_date) >= startOfPeriod && 
-            new Date(p.inflow_date) <= endOfPeriod
-          ) || [];
+          filteredPatients = patients?.filter(p => {
+            const inflowDate = toDateStr(p.inflow_date);
+            return !!inflowDate && inflowDate >= startOfPeriodStr && inflowDate <= endOfPeriodStr;
+          }) || [];
           title = `${month2}월 신규 등록 환자 (유입일 기준) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
           break;
       }
