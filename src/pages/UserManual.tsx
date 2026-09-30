@@ -26,7 +26,8 @@ import {
   ChevronRight,
   Image as ImageIcon,
   ShieldCheck,
-  Clock
+  Clock,
+  UserX
 } from "lucide-react";
 import excelStep1 from "@/assets/manual/excel-step1.png";
 import excelStep2 from "@/assets/manual/excel-step2.png";
@@ -180,7 +181,7 @@ export default function UserManual() {
                 </div>
                 <div className="border rounded-lg p-3">
                   <div className="font-medium mb-1">⚠️ 이탈 리스크 환자</div>
-                  <p className="text-sm text-muted-foreground">3주 이상 체크 없는 환자 수</p>
+                  <p className="text-sm text-muted-foreground">아웃위기·아웃 상태 환자 수</p>
                 </div>
                 <div className="border rounded-lg p-3">
                   <div className="font-medium mb-1">📞 상담 현황</div>
@@ -394,6 +395,7 @@ export default function UserManual() {
                   </ul>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">CRM 창이 로그인 화면이면 로그인 후 사이트에서 다시 시작하세요. 기존 「CRM 연동」 북마크 그대로 쓰면 됩니다.</p>
+              </div>
 
               <Separator />
 
@@ -486,7 +488,7 @@ export default function UserManual() {
                       <Badge className="bg-orange-600">아웃위기</Badge>
                     </div>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• 마지막 내원일(또는 유입일/등록일)로부터 21일 이상 경과 시 자동 분류</li>
+                      <li>• 마지막 내원일(없으면 유입일, 상담일)로부터 21일 이상 경과 시 자동 분류</li>
                       <li>• 이탈 리스크 관리 페이지에 표시됨</li>
                       <li>• 대시보드 이탈 리스크 수에 포함됨</li>
                     </ul>
@@ -497,7 +499,7 @@ export default function UserManual() {
                       <Badge className="bg-red-600">아웃</Badge>
                     </div>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• 마지막 내원일(또는 유입일/등록일)로부터 30일 이상 경과 시 자동 분류</li>
+                      <li>• 마지막 내원일(없으면 유입일, 상담일)로부터 30일 이상 경과 시 자동 분류</li>
                       <li>• 이탈 리스크 관리 페이지에 표시됨</li>
                       <li>• 통계의 아웃 환자 수에 집계됨</li>
                     </ul>
@@ -549,7 +551,7 @@ export default function UserManual() {
                   <li>3. 직접 입력할 상태 선택: <strong>외래·낮병동·기타·전화F/U</strong></li>
                   <li className="text-sm text-muted-foreground">※ 입원·재원·퇴원은 CRM 일괄 동기화로 자동 입력되고, 당일 입퇴원은 낮병동으로 들어갑니다.</li>
                   <li className="text-sm text-muted-foreground">※ 연속 입원 기간은 분홍 배경으로 표시됩니다.</li>
-                  <li className="text-sm text-muted-foreground">※ 입원·재원·퇴원은 「CRM 일괄 동기화」로 자동 입력되어 직접 선택할 수 없습니다. (이미 적힌 칸의 메모 수정·삭제는 가능)</li>
+                  <li className="text-sm text-muted-foreground">※ 기존 입원·재원·퇴원 칸은 메모 수정과 삭제가 가능합니다.</li>
                   
                 </ol>
               </div>
@@ -612,16 +614,17 @@ export default function UserManual() {
                   <div className="border rounded-lg p-3">
                     <div className="font-medium text-orange-600 mb-1">아웃위기 환자</div>
                     <p className="text-sm text-muted-foreground">
-                      마지막 내원일(또는 유입일/등록일)로부터 21일 이상 경과한 환자
+                      마지막 내원일(없으면 유입일, 상담일)로부터 21일 이상 경과한 환자
                     </p>
                   </div>
                   <div className="border rounded-lg p-3">
                     <div className="font-medium text-red-600 mb-1">아웃 환자</div>
                     <p className="text-sm text-muted-foreground">
-                      마지막 내원일(또는 유입일/등록일)로부터 30일 이상 경과한 환자
+                      마지막 내원일(없으면 유입일, 상담일)로부터 30일 이상 경과한 환자
                     </p>
                   </div>
                 </div>
+                <p className="text-sm text-muted-foreground mt-3">입원 환자와 사망·상태악화·치료종료·면책기간 상태는 자동 아웃 판정에서 제외됩니다.</p>
               </div>
 
               <Separator />
@@ -662,12 +665,36 @@ export default function UserManual() {
           </CardContent>
         </Card>
 
-        {/* 6. 면책기간 환자 관리 */}
+        {/* 6. 이탈 환자 스케줄 확인 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserX className="w-5 h-5 text-primary" />
+              6. 이탈 환자 스케줄 확인
+            </CardTitle>
+            <CardDescription>아웃·아웃위기 환자의 월별 일정과 상태 확인</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>유입 환자 중 관리 상태가 아웃 또는 아웃위기인 환자를 달력 형태로 확인합니다.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="border rounded-lg p-3">
+                <p className="font-medium mb-1">상태 기록</p>
+                <p className="text-sm text-muted-foreground">날짜별 상태와 메모를 확인·수정하고 환자 표시 순서를 조정할 수 있습니다.</p>
+              </div>
+              <div className="border rounded-lg p-3">
+                <p className="font-medium mb-1">엑셀 내보내기</p>
+                <p className="text-sm text-muted-foreground">선택 월의 환자 정보와 날짜별 상태를 엑셀로 저장합니다.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 7. 면책기간 환자 관리 */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-primary" />
-              6. 면책기간 환자 관리
+              7. 면책기간 환자 관리
             </CardTitle>
             <CardDescription>면책기간 상태 환자의 재연락 및 복귀 관리</CardDescription>
           </CardHeader>
@@ -755,7 +782,7 @@ export default function UserManual() {
                     각 환자 카드에 "마지막 체크 이후" 경과일이 자동으로 표시됩니다.
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    • 기준: 최종 내원일, 유입일, 또는 등록일 중 가장 최근 날짜<br/>
+                    • 기준: 최종 내원일, 유입일, 또는 상담일 중 가장 최근 날짜<br/>
                     • 실시간 계산되어 항상 최신 상태 유지
                   </p>
                 </div>
@@ -862,12 +889,12 @@ export default function UserManual() {
           </CardContent>
         </Card>
 
-        {/* 7. 통계 관리 */}
+        {/* 8. 통계 관리 */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-primary" />
-              7. 통계 관리
+              8. 통계 관리
             </CardTitle>
             <CardDescription>매출 및 환자 관리 통계 분석</CardDescription>
           </CardHeader>
@@ -926,12 +953,12 @@ export default function UserManual() {
           </CardContent>
         </Card>
 
-        {/* 8. CRM 연동 */}
+        {/* 9. CRM 연동 */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookMarked className="w-5 h-5 text-primary" />
-              8. CRM 연동
+              9. CRM 연동
             </CardTitle>
             <CardDescription>병원 CRM 시스템과의 연동</CardDescription>
           </CardHeader>
@@ -954,12 +981,12 @@ export default function UserManual() {
                <Separator />
 
                <div>
-                 <h4 className="font-semibold mb-3">📌 북마크 쓰임새 2가지</h4>
+                 <h4 className="font-semibold mb-3">📌 「CRM 연동」 북마크 쓰임새 2가지</h4>
                  <div className="grid gap-3 sm:grid-cols-2">
                    <div className="border rounded-lg p-3">
                      <p className="font-medium mb-1">① 일괄 동기화</p>
                      <p className="text-sm text-muted-foreground">
-                       사이트 환자 리스트에서 시작합니다. CRM 입원정보도 함께 가져와 일별 환자 상태에 자동 반영됩니다.{' '}
+                       관리환자 리스트에서 시작합니다. 기본정보·입원정보·패키지를 함께 가져옵니다.{' '}
                        <span className="text-xs">(3. 관리 환자 리스트 참고)</span>
                      </p>
                    </div>
@@ -970,6 +997,25 @@ export default function UserManual() {
                      </p>
                    </div>
                  </div>
+                 <div className="bg-blue-50 border-l-4 border-blue-500 p-3 mt-3">
+                   <p className="text-sm"><strong>북마크는 「CRM 연동」 하나만 사용합니다.</strong> 「패키지 연동」 북마크는 더 이상 사용하지 않습니다.</p>
+                 </div>
+               </div>
+
+               <Separator />
+
+               <div>
+                 <h4 className="font-semibold mb-3">🔄 일괄 동기화 내용과 확인사항</h4>
+                 <div className="grid gap-3 sm:grid-cols-2">
+                   <div className="border rounded-lg p-3"><strong>가져오는 항목</strong><p className="text-sm text-muted-foreground mt-1">기본정보, 입원·재원·퇴원·낮병동, 예치금·적립금·첩약관리 횟수</p></div>
+                   <div className="border rounded-lg p-3"><strong>운영 기준</strong><p className="text-sm text-muted-foreground mt-1">하루 1회 출근 후 권장. 마스터는 전체 환자, 실장은 본인 환자</p></div>
+                 </div>
+                 <ul className="text-sm space-y-1 mt-3 ml-4">
+                   <li>• 이름 불일치와 충돌을 먼저 확인합니다.</li>
+                   <li>• 정리 대상은 체크할 때만 삭제하고, CRM에 없는 기존 패키지 거래는 삭제하지 않습니다.</li>
+                   <li>• 치료종료는 기본 해제, 입원 중 아웃→관리 중과 패키지 거래 반영은 기본 체크입니다.</li>
+                   <li>• 패키지 잔액 불일치와 종류 미정 패키지를 확인합니다.</li>
+                 </ul>
                </div>
 
                <Separator />
