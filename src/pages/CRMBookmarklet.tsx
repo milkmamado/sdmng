@@ -176,6 +176,11 @@ export default function CRMBookmarklet() {
             입원정보 자동 반영까지 <strong>기존 북마크 그대로</strong> 됩니다 — 북마크를 새로 설치하거나 다시 바꿀 필요는 없습니다.
           </p>
         </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">⚠️ 공통 주의</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
