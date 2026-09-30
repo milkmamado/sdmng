@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
-import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery, fetchInChunks } from '@/lib/fetchAllRows';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -522,31 +522,43 @@ export default function StatisticsManagement() {
             .select('id')
             .eq('assigned_manager', targetMgr);
           managerPatientsQuery = applyBranchFilter(managerPatientsQuery);
-          const { data: managerPatients } = await managerPatientsQuery;
+          const { data: managerPatients } = await fetchAllQuery(managerPatientsQuery);
           managerPatientIds = managerPatients?.map(p => p.id) || [];
         }
 
-        while (hasMore) {
-          let query = supabase
-            .from('package_transactions')
-            .select('amount, non_covered_amount, transaction_type, patient_id')
-            .in('transaction_type', ['inpatient_revenue', 'outpatient_revenue', 'deposit_in'])
-            .order('id', { ascending: true })
-            .range(from, from + PAGE_SIZE - 1);
+        // 큰 id 목록은 100개씩 나눠 조회 후 합침 (URL 길이 초과 방지)
+        const idChunks: (string[] | null)[] = [];
+        if (managerPatientIds !== null && managerPatientIds.length > 0) {
+          for (let i = 0; i < managerPatientIds.length; i += 100) idChunks.push(managerPatientIds.slice(i, i + 100));
+        } else {
+          idChunks.push(null);
+        }
 
-          query = applyBranchFilter(query);
+        for (const idChunk of idChunks) {
+          from = 0;
+          hasMore = true;
+          while (hasMore) {
+            let query = supabase
+              .from('package_transactions')
+              .select('amount, non_covered_amount, transaction_type, patient_id')
+              .in('transaction_type', ['inpatient_revenue', 'outpatient_revenue', 'deposit_in'])
+              .order('id', { ascending: true })
+              .range(from, from + PAGE_SIZE - 1);
 
-          if (managerPatientIds !== null && managerPatientIds.length > 0) {
-            query = query.in('patient_id', managerPatientIds);
-          }
+            query = applyBranchFilter(query);
 
-          const { data } = await query;
-          if (data && data.length > 0) {
-            allData = allData.concat(data);
-            from += PAGE_SIZE;
-            hasMore = data.length === PAGE_SIZE;
-          } else {
-            hasMore = false;
+            if (idChunk !== null) {
+              query = query.in('patient_id', idChunk);
+            }
+
+            const { data } = await query;
+            if (data && data.length > 0) {
+              allData = allData.concat(data);
+              from += PAGE_SIZE;
+              hasMore = data.length === PAGE_SIZE;
+            } else {
+              hasMore = false;
+            }
           }
         }
         return allData;
@@ -563,11 +575,11 @@ export default function StatisticsManagement() {
           .select('id')
           .eq('assigned_manager', targetManager);
         managerPatientsQuery = applyBranchFilter(managerPatientsQuery);
-        const { data: managerPatients } = await managerPatientsQuery;
+        const { data: managerPatients } = await fetchAllQuery(managerPatientsQuery);
         monthlyManagerPatientIds = managerPatients?.map(p => p.id) || [];
       }
 
-      const { data: monthlyTransactions, error: monthlyTransactionsError } = await fetchAllRows((from, to) => {
+      const fetchMonthlyTx = (idChunk: string[] | null) => fetchAllRows((from, to) => {
         let query = supabase
           .from('package_transactions')
           .select('amount, non_covered_amount, transaction_type, patient_id')
@@ -577,11 +589,14 @@ export default function StatisticsManagement() {
           .order('id', { ascending: true });
 
         query = applyBranchFilter(query);
-        if (monthlyManagerPatientIds !== null) {
-          query = query.in('patient_id', monthlyManagerPatientIds);
+        if (idChunk !== null) {
+          query = query.in('patient_id', idChunk);
         }
         return query.range(from, to);
       });
+      const { data: monthlyTransactions, error: monthlyTransactionsError } = monthlyManagerPatientIds !== null
+        ? await fetchInChunks(monthlyManagerPatientIds, (chunk) => fetchMonthlyTx(chunk))
+        : await fetchMonthlyTx(null);
       if (monthlyTransactionsError) throw monthlyTransactionsError;
 
       // 환자 ID별 매니저 정보 매핑 (매출은 관리 상태와 무관하게 전체 환자 기준)
@@ -692,7 +707,7 @@ export default function StatisticsManagement() {
         
         managerInflowQuery = applyBranchFilter(managerInflowQuery);
         
-        const { data: managerInflowPatients } = await managerInflowQuery;
+        const { data: managerInflowPatients } = await fetchAllQuery(managerInflowQuery);
         
         const managerNewPatientsCount = managerInflowPatients?.filter(p => {
           const refDate = toDateStr(p.inflow_date) || toDateStr(p.created_at);
