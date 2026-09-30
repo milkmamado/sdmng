@@ -16,6 +16,8 @@ import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
+import { ClassificationSection } from '@/components/ClassificationSection';
+import { callClassifyPatient } from '@/lib/classifyPatient';
 
 interface PatientBasicFormProps {
   patient?: any;
@@ -75,6 +77,28 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
   const [syncing, setSyncing] = useState(false);
   const [syncingPhone, setSyncingPhone] = useState(false);
   const { toast } = useToast();
+  // 진단명·이전병원 분류 메타 (폼에서 수동 변경/확인 시 갱신)
+  const [classMeta, setClassMeta] = useState({
+    diagnosis_source: null as string | null,
+    diagnosis_needs_review: false,
+    diagnosis_raw: null as string | null,
+    hospital_source: null as string | null,
+    hospital_needs_review: false,
+    hospital_raw: null as string | null,
+  });
+  // 사용자가 진단·병원 영역을 건드렸는지 추적 (안 건드렸으면 저장 시 기존 값 유지)
+  const [classTouched, setClassTouched] = useState({ diagnosis: false, hospital: false });
+
+  const handleClassFieldChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleClassManualChange = (kind: 'diagnosis' | 'hospital') => {
+    setClassTouched(prev => ({ ...prev, [kind]: true }));
+    setClassMeta(prev => kind === 'diagnosis'
+      ? { ...prev, diagnosis_source: 'manual', diagnosis_needs_review: false }
+      : { ...prev, hospital_source: 'manual', hospital_needs_review: false });
+  };
 
   useEffect(() => {
     fetchOptions();
@@ -137,6 +161,17 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
         consultation_date: patient.consultation_date || '',
         memo1: patient.memo1 || ''
       });
+
+      setClassMeta({
+        diagnosis_source: patient.diagnosis_source || null,
+        diagnosis_needs_review: !!patient.diagnosis_needs_review,
+        diagnosis_raw: patient.diagnosis_raw || null,
+        hospital_source: patient.hospital_source || null,
+        hospital_needs_review: !!patient.hospital_needs_review,
+        hospital_raw: patient.hospital_raw || null,
+      });
+      setClassTouched({ diagnosis: false, hospital: false });
+
       
       // manager_name이 없으면 현재 사용자 이름 가져오기
       if (!patient.manager_name) {
@@ -145,9 +180,11 @@ export function PatientBasicForm({ patient, onClose, initialData }: PatientBasic
     } else if (initialData) {
       // 조회 다이얼로그에서 넘어온 초기 데이터 설정
       fetchCurrentUserName();
+      // CRM에서 넘어오는 진단명·이전병원 4개 필드는 무시 (자동 분류가 담당)
+      const { diagnosis_category, diagnosis_detail, hospital_category, hospital_branch, ...restInitial } = initialData;
       setFormData(prev => ({
         ...prev,
-        ...initialData,
+        ...restInitial,
         // manager_name은 현재 사용자로 덮어쓰기 위해 제외
         manager_name: prev.manager_name
       }));
