@@ -13,6 +13,7 @@ export interface CrmRecord {
   };
   cnsl?: { cnslCnts?: string | null; cnslDate?: string | null; cnslHm?: string | null; count?: number };
   adms?: CrmAdmsRow[] | null;
+  pkg?: CrmPkg[] | null;
 }
 
 export interface CrmAdmsRow { admsDate?: string; dschDate?: string; admsYn?: string; wardNm?: string; roomNm?: string }
@@ -253,3 +254,117 @@ export function diffDailyStatus(
 }
 
 export const mdLabel = (s: string) => `${Number(s.slice(5, 7))}/${Number(s.slice(8, 10))}`;
+
+// ---------- 패키지(예치금·적립금·횟수) ----------
+export interface CrmPkgAct { actNo: number | string; actStartDate?: string; actEndDate?: string; actAmount?: number | string; actCnts?: string | null }
+export interface CrmPkg {
+  pkgCd: string; pkgNm?: string; a01?: number; a02?: number; b01?: number; b02?: number;
+  acts: { AA?: CrmPkgAct[]; AB?: CrmPkgAct[]; BA?: CrmPkgAct[]; BB?: CrmPkgAct[] };
+}
+export type PkgKind = 'money' | 'count';
+export const PKG_TX_TYPES = ['deposit_in', 'deposit_out', 'reward_in', 'reward_out', 'count_in', 'count_out'] as const;
+export interface PkgTx {
+  transaction_type: string; transaction_date: string; amount: number; count: number;
+  date_from: string | null; date_to: string | null; note: string | null; crm_act_no: number; crm_pkg_cd: string;
+}
+export interface ExistingPkgRow {
+  id: string; transaction_type: string; transaction_date: string; amount: number | string | null;
+  count: number | null; crm_act_no: number | string | null; date_from?: string | null; date_to?: string | null; note?: string | null;
+}
+export interface PackagePlan {
+  inserts: PkgTx[];
+  links: { id: string; crm_act_no: number; crm_pkg_cd: string; tx: PkgTx }[];
+  changed: { id: string; before: ExistingPkgRow; tx: PkgTx }[];
+  orphans: ExistingPkgRow[];
+  unknownPkgs: { pkgCd: string; pkgNm?: string }[];
+  balanceMismatch: { deposit?: { site: number; crm: number }; reward?: { site: number; crm: number }; count?: { site: number; crm: number } } | null;
+}
+
+const MONEY_MAP: Record<string, string> = { AA: 'deposit_in', AB: 'deposit_out', BA: 'reward_in', BB: 'reward_out' };
+const COUNT_MAP: Record<string, string> = { AA: 'count_in', AB: 'count_out' };
+const num = (v: any) => (v === null || v === undefined || v === '' ? 0 : Number(v) || 0);
+const d10 = (v: any) => (v ? String(v).slice(0, 10) : null);
+
+export function convertCrmPkg(pkgList: CrmPkg[], kindMap: Map<string, PkgKind>) {
+  const txs: PkgTx[] = [];
+  const unknownPkgs: { pkgCd: string; pkgNm?: string }[] = [];
+  for (const p of pkgList || []) {
+    const cd = String(p.pkgCd);
+    const kind = kindMap.get(cd);
+    if (!kind) { unknownPkgs.push({ pkgCd: cd, pkgNm: p.pkgNm }); continue; }
+    const map = kind === 'money' ? MONEY_MAP : COUNT_MAP;
+    for (const key of Object.keys(map)) {
+      const type = map[key];
+      for (const a of (p.acts as any)?.[key] || []) {
+        if (!a || a.actStartDate === '합계') continue;
+        const val = num(a.actAmount);
+        const s = crmDate(a.actStartDate);
+        const e = crmDate(a.actEndDate);
+        const isOut = type.endsWith('_out');
+        const date = isOut ? e || s : s;
+        if (!date || val <= 0 || a.actNo === null || a.actNo === undefined || a.actNo === '') continue;
+        const note = a.actCnts && String(a.actCnts).trim() !== '' ? String(a.actCnts) : null;
+        txs.push({
+          transaction_type: type, transaction_date: date,
+          amount: kind === 'money' ? val : 0, count: kind === 'count' ? val : 0,
+          date_from: isOut ? s : null, date_to: isOut ? e || s : null,
+          note, crm_act_no: Number(a.actNo), crm_pkg_cd: cd,
+        });
+      }
+    }
+  }
+  return { txs, unknownPkgs };
+}
+
+export function buildPackagePlan(
+  pkgList: CrmPkg[], kindMap: Map<string, PkgKind>, existingRows: ExistingPkgRow[], _patient?: any,
+): PackagePlan {
+  const { txs, unknownPkgs } = convertCrmPkg(pkgList, kindMap);
+  const existing = (existingRows || []).filter((r) => (PKG_TX_TYPES as readonly string[]).includes(r.transaction_type));
+  const byActNo = new Map<number, ExistingPkgRow>();
+  existing.forEach((r) => { if (r.crm_act_no !== null && r.crm_act_no !== undefined) byActNo.set(Number(r.crm_act_no), r); });
+  const pool = existing.filter((r) => r.crm_act_no === null || r.crm_act_no === undefined);
+  const used = new Set<string>();
+  const plan: PackagePlan = { inserts: [], links: [], changed: [], orphans: [], unknownPkgs, balanceMismatch: null };
+  // 적용 후 상태: 연결된 기존 행은 CRM 값으로 대체, 미연결(orphan)은 그대로 남음
+  const finalRows: { t: string; amount: number; count: number }[] = [];
+  for (const tx of txs) {
+    const ex = byActNo.get(tx.crm_act_no);
+    if (ex) {
+      const same = ex.transaction_type === tx.transaction_type && d10(ex.transaction_date) === tx.transaction_date &&
+        num(ex.amount) === tx.amount && num(ex.count) === tx.count;
+      if (!same) plan.changed.push({ id: ex.id, before: ex, tx });
+      finalRows.push({ t: tx.transaction_type, amount: tx.amount, count: tx.count });
+      continue;
+    }
+    const m = pool.find((r) => !used.has(r.id) && r.transaction_type === tx.transaction_type &&
+      d10(r.transaction_date) === tx.transaction_date && num(r.amount) === tx.amount && num(r.count) === tx.count);
+    if (m) {
+      used.add(m.id);
+      plan.links.push({ id: m.id, crm_act_no: tx.crm_act_no, crm_pkg_cd: tx.crm_pkg_cd, tx });
+    } else {
+      plan.inserts.push(tx);
+    }
+    finalRows.push({ t: tx.transaction_type, amount: tx.amount, count: tx.count });
+  }
+  plan.orphans = pool.filter((r) => !used.has(r.id));
+  // CRM에서 사라진(연결됐지만 이번 목록에 없는) 행도 적용 후 남아 있으므로 합계에 포함
+  const txActNos = new Set(txs.map((t) => t.crm_act_no));
+  for (const r of existing) {
+    const linkedGone = r.crm_act_no !== null && r.crm_act_no !== undefined && !txActNos.has(Number(r.crm_act_no));
+    if (linkedGone || plan.orphans.includes(r)) finalRows.push({ t: r.transaction_type, amount: num(r.amount), count: num(r.count) });
+  }
+  const sum = (t: string, f: 'amount' | 'count') => finalRows.filter((r) => r.t === t).reduce((s, r) => s + r[f], 0);
+  const known = (pkgList || []).filter((p) => kindMap.has(String(p.pkgCd)));
+  const money = known.filter((p) => kindMap.get(String(p.pkgCd)) === 'money');
+  const count = known.filter((p) => kindMap.get(String(p.pkgCd)) === 'count');
+  const mm: NonNullable<PackagePlan['balanceMismatch']> = {};
+  const dep = { site: sum('deposit_in', 'amount') - sum('deposit_out', 'amount'), crm: money.reduce((s, p) => s + num(p.a02), 0) };
+  if (dep.site !== dep.crm) mm.deposit = dep;
+  const rew = { site: sum('reward_in', 'amount') - sum('reward_out', 'amount'), crm: money.reduce((s, p) => s + num(p.b02), 0) };
+  if (rew.site !== rew.crm) mm.reward = rew;
+  const cnt = { site: sum('count_in', 'count') - sum('count_out', 'count'), crm: count.reduce((s, p) => s + num(p.a02), 0) };
+  if (cnt.site !== cnt.crm) mm.count = cnt;
+  plan.balanceMismatch = Object.keys(mm).length ? mm : null;
+  return plan;
+}

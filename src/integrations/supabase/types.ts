@@ -64,6 +64,27 @@ export type Database = {
           },
         ]
       }
+      crm_package_types: {
+        Row: {
+          kind: string
+          pkg_cd: string
+          pkg_nm: string
+          updated_at: string
+        }
+        Insert: {
+          kind: string
+          pkg_cd: string
+          pkg_nm: string
+          updated_at?: string
+        }
+        Update: {
+          kind?: string
+          pkg_cd?: string
+          pkg_nm?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cross_view_grants: {
         Row: {
           created_at: string
@@ -394,6 +415,8 @@ export type Database = {
           branch: Database["public"]["Enums"]["branch_type"]
           count: number | null
           created_at: string
+          crm_act_no: number | null
+          crm_pkg_cd: string | null
           customer_number: string | null
           date_from: string | null
           date_to: string | null
@@ -410,6 +433,8 @@ export type Database = {
           branch?: Database["public"]["Enums"]["branch_type"]
           count?: number | null
           created_at?: string
+          crm_act_no?: number | null
+          crm_pkg_cd?: string | null
           customer_number?: string | null
           date_from?: string | null
           date_to?: string | null
@@ -426,6 +451,8 @@ export type Database = {
           branch?: Database["public"]["Enums"]["branch_type"]
           count?: number | null
           created_at?: string
+          crm_act_no?: number | null
+          crm_pkg_cd?: string | null
           customer_number?: string | null
           date_from?: string | null
           date_to?: string | null
