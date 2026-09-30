@@ -16,6 +16,8 @@
   var BASE_PATH = '/crm/cmsn/cmsn0120sp/reqGetCmsn0120spPtBaseInfo.ajax';
   var CNSL_PATH = '/crm/cmsd/cmsd0160sm/getCmsd0160smAfterCnslMngmList.ajax';
   var ADMS_PATH = '/crm/cmsa/cmsa0010sm/getCmsa0010smAdmsList.ajax';
+  var PKG_LIST_PATH = '/crm/cmsn/cmsn0240sm/getCmsn0240smPkgClntList.ajax';
+  var PKG_ACT_PATH = '/crm/cmsn/cmsn0240sm/getCmsn0240smPkgClntActList.ajax';
 
   function done() { window.__crmBridgeRunning = false; }
 
@@ -110,6 +112,58 @@
     }).catch(function () { return null; });
   }
 
+  // 패키지 조회 — 실패해도 세션 만료 카운트에 반영하지 않음. 실패 시 null(모름)
+  function pkgPost(path, body) {
+    return fetch(path, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: body
+    }).then(function (res) { return res.text(); }).then(function (txt) {
+      var json;
+      try { json = JSON.parse(txt); } catch (e) { throw new Error('pkg parse'); }
+      if (!json || json.result !== 'ok') throw new Error('pkg result');
+      return Array.isArray(json.data) ? json.data : [];
+    });
+  }
+  function fetchPkgActs(clntNo, pkgCd, actCd, dvcd) {
+    return pkgPost(PKG_ACT_PATH,
+      'srch_bnch_cd=' + BNCH + '&srch_clnt_no=' + encodeURIComponent(clntNo) +
+      '&srch_pkg_cd=' + encodeURIComponent(pkgCd) + '&srch_act_cd=' + actCd + '&srch_act_dvcd=' + dvcd
+    ).then(function (rows) {
+      return rows.filter(function (r) { return r && r.actStartDate !== '합계'; }).map(function (r) {
+        return { actNo: r.actNo, actStartDate: r.actStartDate, actEndDate: r.actEndDate, actAmount: r.actAmount, actCnts: r.actCnts };
+      });
+    });
+  }
+  function fetchPkg(clntNo) {
+    return pkgPost(PKG_LIST_PATH,
+      'srch_bnch_cd=' + BNCH + '&srch_pkg_cd=&srch_clnt_no=' + encodeURIComponent(clntNo)
+    ).then(function (list) {
+      var out = [];
+      var chain = Promise.resolve();
+      list.forEach(function (p) {
+        var hasB = Object.prototype.hasOwnProperty.call(p, 'actAmountB01') || Object.prototype.hasOwnProperty.call(p, 'actAmountB02');
+        var item = {
+          pkgCd: String(p.pkgCd), pkgNm: p.pkgNm,
+          a01: p.actAmountA01, a02: p.actAmountA02, b01: p.actAmountB01, b02: p.actAmountB02,
+          acts: { AA: [], AB: [], BA: [], BB: [] }
+        };
+        out.push(item);
+        var kinds = hasB ? ['AA', 'AB', 'BA', 'BB'] : ['AA', 'AB'];
+        kinds.forEach(function (k) {
+          chain = chain.then(function () {
+            return fetchPkgActs(clntNo, item.pkgCd, k.charAt(0), k.charAt(1));
+          }).then(function (rows) { item.acts[k] = rows; return sleep(150); });
+        });
+      });
+      return chain.then(function () { return out; });
+    }).catch(function () { return null; });
+  }
+
   function fetchRecord(clntNo) {
     return crmPost(BASE_PATH, clntNo).then(function (a) {
       var b0 = (a.data && a.data[0]) || null;
@@ -117,7 +171,8 @@
       return crmPost(CNSL_PATH, clntNo).then(function (b) {
         var list = b.data || [];
         var latest = pickLatestCnsl(list);
-        return fetchAdms(clntNo).then(function (adms) {
+        return Promise.all([fetchAdms(clntNo), fetchPkg(clntNo)]).then(function (res) {
+          var adms = res[0], pkg = res[1];
           return {
             clntNo: clntNo,
             ok: true,
@@ -133,7 +188,8 @@
               cnslHm: latest ? latest.cnslHm : null,
               count: list.length
             },
-            adms: adms
+            adms: adms,
+            pkg: pkg
           };
         });
       });
