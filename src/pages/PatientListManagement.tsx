@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useDiagnosisOptions, useHospitalOptions, useInsuranceTypeOptions, useTreatmentDetailOptions, usePatientStatusOptions, useCurrentUserName } from '@/hooks/useOptionsData';
 import { useToast } from "@/hooks/use-toast";
-import { fetchAllRows } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
@@ -337,7 +337,7 @@ export default function PatientListManagement() {
       // 지점 필터 적용
       query = applyBranchFilter(query);
       
-      const { data, error } = await query;
+      const { data, error } = await fetchAllQuery(query);
 
       if (error) throw error;
       

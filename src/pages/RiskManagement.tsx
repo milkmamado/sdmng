@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { fetchAllRows, fetchAllQuery } from '@/lib/fetchAllRows';
+import { fetchAllRows, fetchAllQuery, fetchInChunks } from '@/lib/fetchAllRows';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -271,10 +271,10 @@ export default function RiskManagement() {
 
       if (riskyPatients.length > 0) {
         const patientIds = riskyPatients.map(p => p.id);
-        const { data: reconnectData, error: reconnectError } = await supabase
+        const { data: reconnectData, error: reconnectError } = await fetchInChunks(patientIds, (chunk) => supabase
           .from("patient_reconnect_tracking")
           .select("*")
-          .in("patient_id", patientIds);
+          .in("patient_id", chunk));
 
         if (reconnectError) throw reconnectError;
 
