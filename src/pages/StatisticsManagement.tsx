@@ -73,6 +73,9 @@ export default function StatisticsManagement() {
     outPatientsThisMonth: 0, // 11월 아웃 환자 (11월에 등록됐다가 아웃됨)
     newPatientsThisMonth: 0,
     totalNewRegistrations: 0, // 신규 등록 총 수 (치료동의율 계산용)
+    inflowAllThisMonth: 0, // 유입 전체 (관리상태 무관)
+    inflowBreakdown: { managed: 0, completed: 0, out: 0, other: 0 },
+    newRegBreakdown: { inflow: 0, phone: 0, visit: 0, failed: 0 },
     phoneConsultPatientsThisMonth: 0,
     visitConsultPatientsThisMonth: 0,
     failedPatientsThisMonth: 0,
@@ -263,7 +266,7 @@ export default function StatisticsManagement() {
       // 1. 해당 월 신규 등록 환자: inflow_date 또는 consultation_date가 선택한 월에 있는 환자
       let monthNewPatientsQuery = supabase
         .from('patients')
-        .select('id, assigned_manager, manager_name, payment_amount, inflow_date, consultation_date, inflow_status');
+        .select('id, assigned_manager, manager_name, payment_amount, inflow_date, consultation_date, inflow_status, management_status');
 
       // 일반 매니저는 본인 환자만, 마스터/관리자가 특정 매니저 선택 시 해당 매니저만
       if (!isMasterOrAdmin || (selectedManager !== 'all' && selectedManager)) {
@@ -288,19 +291,44 @@ export default function StatisticsManagement() {
         sample: allMonthPatients?.slice(0, 3).map(p => ({ id: p.id, inflow_date: p.inflow_date }))
       });
       
+      // 신규 등록 = 유입(inflow_date) + 전화상담/방문상담/실패(consultation_date)
+      const inMonth = (d: string | null | undefined) => {
+        if (!d) return false;
+        const ds = toDateStr(d);
+        return ds !== null && ds >= queryStartDate && ds <= queryEndDate;
+      };
+      const isNewRegistration = (p: any) => {
+        if (p.inflow_status === '유입') return inMonth(p.inflow_date);
+        if (p.inflow_status === '전화상담' || p.inflow_status === '방문상담' || p.inflow_status === '실패') return inMonth(p.consultation_date);
+        return false;
+      };
+      const newRegSeen = new Set<string>();
       const monthNewPatients = allMonthPatients?.filter(p => {
-        if (!p.inflow_date) return false;
-        const inflowDate = toDateStr(p.inflow_date);
-        const included = inflowDate !== null && inflowDate >= queryStartDate && inflowDate <= queryEndDate;
-        return included;
-      });
+        if (newRegSeen.has(p.id) || !isNewRegistration(p)) return false;
+        newRegSeen.add(p.id);
+        return true;
+      }) || [];
+      const newRegBreakdown = {
+        inflow: monthNewPatients.filter(p => p.inflow_status === '유입').length,
+        phone: monthNewPatients.filter(p => p.inflow_status === '전화상담').length,
+        visit: monthNewPatients.filter(p => p.inflow_status === '방문상담').length,
+        failed: monthNewPatients.filter(p => p.inflow_status === '실패').length,
+      };
+      const inflowAllList = monthNewPatients.filter(p => p.inflow_status === '유입');
+      const inflowAllThisMonth = inflowAllList.length;
+      const inflowBreakdown = {
+        managed: inflowAllList.filter(p => p.management_status === '관리 중').length,
+        completed: inflowAllList.filter(p => p.management_status === '치료종료').length,
+        out: inflowAllList.filter(p => p.management_status === '아웃').length,
+        other: inflowAllList.filter(p => !['관리 중', '치료종료', '아웃'].includes(p.management_status)).length,
+      };
       
       console.log('[통계관리] 신규 등록 결과:', monthNewPatients?.length);
 
       // 2. 해당 월 관리 환자: 선택한 월에 유입되어 현재 '관리 중'인 환자 (유입일 필수)
       let totalPatientsQuery = supabase
         .from('patients')
-        .select('id, assigned_manager, manager_name, inflow_date')
+        .select('id, assigned_manager, manager_name, inflow_date, inflow_status')
         .eq('management_status', '관리 중')
         .not('inflow_date', 'is', null); // 유입일 필수
 
@@ -321,7 +349,9 @@ export default function StatisticsManagement() {
       const totalPatientsCount = totalPatientsFiltered?.length || 0;
 
       // 전체 관리 중인 환자 (기간 무관)
-      const totalAllPatientsCount = totalPatientsData?.length || 0;
+      // 총 관리 환자: 유입상태='유입' 조건 (매출 조회용 totalPatientsData 는 그대로 유지)
+      const managedInflowPatients = totalPatientsData?.filter(p => p.inflow_status === '유입') || [];
+      const totalAllPatientsCount = managedInflowPatients.length;
 
       // 매출 집계용: 관리 상태와 무관하게 해당 매니저의 모든 환자
       let managerAllPatientsQuery = supabase
@@ -453,7 +483,7 @@ export default function StatisticsManagement() {
       }
 
       // 전체 관리 중인 환자 수 집계 (기간 무관) - 모든 매니저 카드가 생성된 후 실행
-      totalPatientsData?.forEach(patient => {
+      managedInflowPatients.forEach(patient => {
         const stats = managerMap.get(patient.assigned_manager);
         if (stats) {
           stats.total_all_patients += 1;
@@ -734,6 +764,7 @@ export default function StatisticsManagement() {
       });
 
       totals.totalPatients = totalAllPatientsCount; // 유입일 정확히 입력된 전체 관리 중 환자
+      totals.monthPatients = monthNewPatients.length; // 신규 등록 (유입+전화+방문+실패)
       totals.monthlyRevenue = monthlyRevenue; // 당월 매출 (입원+외래 총진료비)
       
       // 객단가 계산은 아래에서 newPatientsCount(11월 유입환자 카드 기준)로 계산
@@ -981,9 +1012,9 @@ export default function StatisticsManagement() {
       }).length;
 
       // 10. 치료동의율 계산
-      const totalNewRegistrations = monthNewPatients?.length || 0;
+      const totalNewRegistrations = monthNewPatients.length;
       const treatmentAgreementRate = totalNewRegistrations > 0 
-        ? Math.round(((newPatientsCount + treatmentCompletedCount) / totalNewRegistrations) * 100) 
+        ? Math.round((inflowAllThisMonth / totalNewRegistrations) * 100) 
         : 0;
 
       // 11. 유입일 미등록 환자
@@ -995,6 +1026,9 @@ export default function StatisticsManagement() {
         outPatientsThisMonth: outPatientsThisMonthCount,
         newPatientsThisMonth: newPatientsCount,
         totalNewRegistrations,
+        inflowAllThisMonth,
+        inflowBreakdown,
+        newRegBreakdown,
         phoneConsultPatientsThisMonth: phoneConsultCount,
         visitConsultPatientsThisMonth: visitConsultCount,
         failedPatientsThisMonth: failedCount,
@@ -1201,12 +1235,11 @@ export default function StatisticsManagement() {
           // 11월 유입 환자 - inflow_status='유입', management_status='관리 중', inflow_date 필수
           filteredPatients = patients?.filter(p => {
             if (p.inflow_status !== '유입') return false;
-            if (p.management_status !== '관리 중') return false;
             if (!p.inflow_date) return false; // 유입일이 반드시 있어야 함
             const inflowDate = toDateStr(p.inflow_date);
             return inflowDate !== null && inflowDate >= startOfPeriodStr && inflowDate <= endOfPeriodStr;
           }) || [];
-          title = `${month2}월 유입 환자 (유입상태/관리 중) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
+          title = `${month2}월 유입 환자 (관리상태 무관) - ${month2}월 ${isCurrentMonth2 ? `1일~${today2.getDate()}일` : '전체'}`;
           break;
         
         case 'phone':
