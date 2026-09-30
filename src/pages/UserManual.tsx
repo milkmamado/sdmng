@@ -183,16 +183,12 @@ export default function UserManual() {
                   <p className="text-sm text-muted-foreground">3주 이상 체크 없는 환자 수</p>
                 </div>
                 <div className="border rounded-lg p-3">
-                  <div className="font-medium mb-1">💰 당월 현재 매출</div>
-                  <p className="text-sm text-muted-foreground">
-                    해당 월 입금 합계
-                  </p>
+                  <div className="font-medium mb-1">📞 상담 현황</div>
+                  <p className="text-sm text-muted-foreground">선택 월의 전화상담·방문상담·실패 현황</p>
                 </div>
                 <div className="border rounded-lg p-3">
-                  <div className="font-medium mb-1">📈 누적 매출</div>
-                  <p className="text-sm text-muted-foreground">
-                    전체 기간 입금 합계
-                  </p>
+                  <div className="font-medium mb-1">✅ 유입·치료 현황</div>
+                  <p className="text-sm text-muted-foreground">유입 환자, 치료종료, 치료동의율과 재진관리 비율</p>
                 </div>
               </div>
             </div>
@@ -354,76 +350,50 @@ export default function UserManual() {
               <div>
                 <h4 className="font-semibold mb-3">🔄 CRM 일괄 동기화</h4>
                 <ol className="space-y-2 ml-4">
-                  <li>1. <strong>CRM에 먼저 로그인</strong>해 두기</li>
-                  <li>2. 환자 리스트 상단 <Badge>CRM 일괄 동기화</Badge> 클릭 → CRM 창이 자동으로 열림</li>
-                  <li>3. 열린 CRM 창에서 북마크바 <Badge variant="outline">CRM 연동</Badge> 클릭 → 우측 상단에 진행률 표시</li>
-                  <li>4. 사이트 창에 미리보기가 뜨면 변경 내용을 확인하고 <Badge>적용</Badge></li>
+                  <li>1. <strong>CRM에 먼저 로그인</strong>해 둡니다.</li>
+                  <li>2. 환자 리스트 상단 <Badge>CRM 일괄 동기화</Badge> 클릭 → 열린 CRM 창에서 북마크바 <Badge variant="outline">CRM 연동</Badge> 클릭</li>
+                  <li>3. 미리보기에서 변경 내용과 주의 항목을 확인한 뒤 <Badge>적용</Badge>을 누릅니다.</li>
                 </ol>
-
                 <div className="grid gap-3 sm:grid-cols-2 mt-3">
                   <div className="border rounded-lg p-3">
-                    <p className="text-sm font-medium mb-1">가져오는 항목</p>
-                    <p className="text-sm text-muted-foreground">
-                      휴대폰번호, 나이, 특이사항1·2, 진료메모1·2, 최초·최종 내원일, 상담내용, 입원정보
-                    </p>
+                    <p className="text-sm font-medium mb-1">기본정보</p>
+                    <p className="text-sm text-muted-foreground">휴대폰·나이·특이사항·진료메모·최초/최종내원일·상담내용</p>
                   </div>
                   <div className="border rounded-lg p-3">
-                    <p className="text-sm font-medium mb-1">바꾸지 않는 항목</p>
-                    <p className="text-sm text-muted-foreground">
-                      이름, 주민번호, 주소, 담당자, 유입·관리 상태, 유입일, 결제·매출
-                    </p>
+                    <p className="text-sm font-medium mb-1">입원정보 → 일별 상태</p>
+                    <p className="text-sm text-muted-foreground">입원·재원·퇴원, 당일 입퇴원은 낮병동. 퇴원 당일 재입원은 끊지 않고 재원으로 이어집니다.</p>
+                  </div>
+                  <div className="border rounded-lg p-3">
+                    <p className="text-sm font-medium mb-1">패키지</p>
+                    <p className="text-sm text-muted-foreground">예치금 입금/사용, 적립금 입력/사용, 첩약관리 횟수</p>
+                  </div>
+                  <div className="border rounded-lg p-3">
+                    <p className="text-sm font-medium mb-1">권장 범위</p>
+                    <p className="text-sm text-muted-foreground">하루 1회 출근 후 권장. 마스터는 전체 환자, 실장 계정은 본인 환자를 동기화합니다.</p>
                   </div>
                 </div>
-
                 <div className="border rounded-lg p-3 mt-3">
-                  <p className="text-sm font-semibold mb-1">🏥 입원정보가 「일별 환자 상태 추적」에 자동 반영됩니다</p>
-                  <p className="text-sm text-muted-foreground">
-                    CRM 고객정보의 <strong>입원정보</strong>(입원일·퇴원일)도 함께 가져와 달력에 채웁니다.
-                    입원일 = <strong>입원</strong>, 그 사이 날짜 = <strong>재원</strong>, 퇴원일 = <strong>퇴원</strong>,
-                    현재 입원 중이면 오늘까지 <strong>재원</strong>으로 들어갑니다.
-                    5/1 이후~오늘까지만, 유입 환자만 대상입니다.
-                  </p>
-                  <ul className="text-sm space-y-1 mt-2">
-                    <li>• 이미 입원/재원/퇴원이 적힌 날은 CRM 기준으로 고쳐집니다.</li>
-                    <li>• 외래·기타 등 다른 상태가 적힌 날은 바꾸지 않고 <strong>「충돌」</strong>로만 표시됩니다.</li>
-                    <li>• CRM 입원기간 밖에 직접 입력한 값은 지우지 않습니다.</li>
-                  </ul>
-                </div>
-
-                <div className="border rounded-lg p-3 mt-3">
-                  <p className="text-sm font-semibold mb-1">미리보기의 두 체크박스</p>
+                  <p className="text-sm font-semibold mb-2">미리보기에서 꼭 확인할 항목</p>
                   <ul className="text-sm space-y-1">
-                    <li>
-                      • <strong>「현재 입원 중인데 아웃/아웃위기 → 관리 중」</strong> — 기본 체크. 입원 중인 환자가 이탈 상태로 남아 있지 않게 바꿔줍니다.
-                    </li>
-                    <li>
-                      • <strong>「치료종료 처리」</strong> — 기본 해제. 부인과 수술 후 회복·척추 환자의 마지막 입원이 퇴원하면 관리 상태를 치료종료로 바꿉니다. 목록을 확인한 뒤 직접 체크해주세요.
-                    </li>
+                    <li>• 이름 불일치, 일별 상태 충돌, 입원상태 빈 기록</li>
+                    <li>• <strong>정리 대상</strong>: CRM에 없는 입원·재원·퇴원. 체크할 때만 삭제되며 외래·기타는 지우지 않습니다.</li>
+                    <li>• <strong>현재 입원 중인데 아웃/아웃위기 → 관리 중</strong>: 기본 체크</li>
+                    <li>• <strong>치료종료 처리</strong>: 기본 해제. 대상 목록 확인 후 직접 체크</li>
+                    <li>• <strong>패키지 거래 반영</strong>: 기본 체크</li>
+                    <li>• CRM에 없는 기존 패키지 거래는 삭제하지 않음</li>
+                    <li>• 패키지 잔액 불일치, 종류 미정 패키지는 적용 전 확인</li>
                   </ul>
                 </div>
-
-                <div className="bg-green-50 border-l-4 border-green-500 p-3 mt-3">
-                  <p className="text-sm">
-                    하루 1번(출근 후) 권장. 본인 환자 기준 1~2분이면 끝납니다. 진행 중에는 사이트 창을 닫지 마세요.
-                  </p>
-                </div>
-
                 <div className="bg-orange-50 border-l-4 border-orange-500 p-3 mt-3">
                   <p className="text-sm font-semibold mb-1">🛡️ 안전장치</p>
                   <ul className="text-sm space-y-1">
-                    <li>• CRM 이름과 사이트 이름이 다르면 그 환자는 건드리지 않음</li>
-                    <li>• CRM에 값이 없으면 기존 값 유지</li>
-                    <li>• 최종 내원일은 더 늦은 날짜로만 바뀜</li>
-                    <li>• 상담 기록이 여러 건인 환자는 기존 상담내용 유지</li>
-                    <li>• 달력의 다른 상태(외래·기타)는 절대 지우지 않음</li>
+                    <li>• 이름이 다르거나 CRM 조회가 실패한 환자는 전체 반영을 건너뜁니다.</li>
+                    <li>• CRM에 값이 없으면 기존 값을 유지하고, 최종 내원일은 더 늦은 날짜로만 바뀝니다.</li>
+                    <li>• 상담기록이 2건 이상이면 기존 상담내용을 유지합니다.</li>
+                    <li>• 입원정보는 2026년 5월 1일 이후부터 오늘까지만, 유입 환자에게 반영합니다.</li>
                   </ul>
                 </div>
-
-                <p className="text-xs text-muted-foreground mt-2">
-                  CRM 창이 로그인 화면으로 열렸다면, 로그인 후 사이트에서 「CRM 일괄 동기화」를 다시 눌러주세요.
-                  입원정보 반영도 기존 북마크 그대로 쓰면 됩니다. 새로 설치할 필요는 없습니다.
-                </p>
-              </div>
+                <p className="text-xs text-muted-foreground mt-2">CRM 창이 로그인 화면이면 로그인 후 사이트에서 다시 시작하세요. 기존 「CRM 연동」 북마크 그대로 쓰면 됩니다.</p>
 
               <Separator />
 
@@ -484,40 +454,13 @@ export default function UserManual() {
                   패키지 관리 (예치금, 적립금, 횟수)
                 </h4>
                 <div className="space-y-3">
-                  <ol className="space-y-2 ml-4">
-                    <li className="flex gap-2">
-                      <span className="font-bold text-primary">1.</span>
-                      <div>
-                        환자 상세 팝업에서 <Badge>패키지 관리</Badge> 섹션 확인
-                      </div>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-bold text-primary">2.</span>
-                      <div>
-                        <Badge variant="outline">최신화</Badge> 버튼 클릭 → CRM 패키지 관리 페이지로 이동
-                      </div>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-bold text-primary">3.</span>
-                      <div>
-                        CRM에서 해당 지점의 패키지 관리 화면을 엽니다
-                      </div>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-bold text-primary">4.</span>
-                      <div>
-                        북마크바의 <Badge variant="outline">패키지 연동</Badge> 북마크 클릭
-                        <div className="mt-1 text-sm text-muted-foreground ml-4">
-                          → 예수금, 적립금, 횟수 정보가 자동으로 추출됩니다
-                        </div>
-                      </div>
-                    </li>
-                  </ol>
+                  <div className="border rounded-lg p-3">
+                    <p className="text-sm">패키지는 <strong>「CRM 일괄 동기화」</strong>에서 자동 반영됩니다.</p>
+                    <p className="text-sm text-muted-foreground mt-1">예치금 입금/사용, 적립금 입력/사용, 첩약관리 횟수를 가져오며 별도의 「패키지 연동」 북마크는 사용하지 않습니다.</p>
+                  </div>
                   <div className="bg-purple-50 border-l-4 border-purple-500 p-3">
-                    <p className="text-xs">
-                      <strong>⚠️ 중요:</strong> 북마크 클릭 전에 미리 CRM 프로그램에 로그인해 두어야 합니다. 
-                      로그인이 안 되어 있으면 데이터를 가져올 수 없습니다!
-                    </p>
+                    <p className="text-sm"><strong>수납금액 = 예치금 입금 합계</strong></p>
+                    <p className="text-xs mt-1">적용 전 미리보기의 패키지 잔액 불일치를 확인하세요. 사이트 잔액과 CRM 잔액이 같아야 정상입니다.</p>
                   </div>
                 </div>
               </div>
@@ -603,16 +546,9 @@ export default function UserManual() {
                 <ol className="space-y-2 ml-4">
                   <li>1. 상단에서 월 선택 (캘린더 또는 화살표 버튼)</li>
                   <li>2. 환자 리스트에서 상태를 기록할 환자의 날짜 칸 클릭</li>
-                  <li>3. 드롭다운에서 해당 날짜 환자 상태 선택 (직접 입력: 외래·낮병동·기타·전화F/U):
-                    <div className="mt-2 space-y-1 ml-4">
-                      <div><Badge className="bg-blue-500">입원</Badge> - 신규 또는 재진 입원 모두</div>
-                      <div><Badge className="bg-indigo-500">재원</Badge> - 입원 중으로 입/퇴원일을 제외하고 재원으로 표기</div>
-                      <div><Badge className="bg-green-500">외래</Badge> - 외래 진료</div>
-                      <div><Badge className="bg-yellow-500">낮병동</Badge> - 낮병동 이용</div>
-                      <div><Badge className="bg-orange-500">전화F/U</Badge> - 전화 상담</div>
-                      <div><Badge className="bg-gray-500">퇴원</Badge> - 퇴원</div>
-                    </div>
-                  </li>
+                  <li>3. 직접 입력할 상태 선택: <strong>외래·낮병동·기타·전화F/U</strong></li>
+                  <li className="text-sm text-muted-foreground">※ 입원·재원·퇴원은 CRM 일괄 동기화로 자동 입력되고, 당일 입퇴원은 낮병동으로 들어갑니다.</li>
+                  <li className="text-sm text-muted-foreground">※ 연속 입원 기간은 분홍 배경으로 표시됩니다.</li>
                   <li className="text-sm text-muted-foreground">※ 입원·재원·퇴원은 「CRM 일괄 동기화」로 자동 입력되어 직접 선택할 수 없습니다. (이미 적힌 칸의 메모 수정·삭제는 가능)</li>
                   
                 </ol>
@@ -942,7 +878,7 @@ export default function UserManual() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="border rounded-lg p-3">
                     <div className="font-medium mb-1">총 관리 환자</div>
-                    <p className="text-sm text-muted-foreground">현재 관리 중인 전체 환자 수</p>
+                    <p className="text-sm text-muted-foreground">유입상태가 유입이고 유입일이 입력된 관리 중 환자</p>
                   </div>
                   <div className="border rounded-lg p-3">
                     <div className="font-medium mb-1">누적 매출</div>
@@ -968,10 +904,11 @@ export default function UserManual() {
               <div>
                 <h4 className="font-semibold mb-3">📈 추가 분석 지표</h4>
                 <div className="space-y-2">
-                  <div>• <strong>아웃 환자:</strong> 아웃 상태인 환자 수</div>
-                  <div>• <strong>유입률 (초진상담):</strong> 선택한 월 신규 유입 환자 수</div>
+                  <div>• <strong>신규 등록:</strong> 유입(유입일) + 전화상담·방문상담·실패(상담일)</div>
+                  <div>• <strong>유입:</strong> 유입상태가 유입인 환자 전체(관리 중·치료종료·아웃·위기 포함)</div>
+                  <div>• <strong>치료동의율:</strong> 유입 ÷ 신규 등록 × 100</div>
                   <div>• <strong>재진관리비율:</strong> 전월 초진 환자 중 당월 활동한 비율</div>
-                  <div>• <strong>관리 기간별 환자:</strong> 1개월, 3개월, 6개월 이상 관리 환자 수</div>
+                  <div>• <strong>통계 매출 카드:</strong> 「입원/외래매출 관리」에서 업로드한 자료 기준</div>
                 </div>
               </div>
 
