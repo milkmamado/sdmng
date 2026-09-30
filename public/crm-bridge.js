@@ -15,6 +15,7 @@
   var BNCH = '11';
   var BASE_PATH = '/crm/cmsn/cmsn0120sp/reqGetCmsn0120spPtBaseInfo.ajax';
   var CNSL_PATH = '/crm/cmsd/cmsd0160sm/getCmsd0160smAfterCnslMngmList.ajax';
+  var ADMS_PATH = '/crm/cmsa/cmsa0010sm/getCmsa0010smAdmsList.ajax';
 
   function done() { window.__crmBridgeRunning = false; }
 
@@ -88,6 +89,27 @@
     return best ? best.c : null;
   }
 
+  // 입원정보 조회 — 실패해도 세션 만료 카운트에 반영하지 않음. 실패 시 null(모름)
+  function fetchAdms(clntNo) {
+    return fetch(ADMS_PATH, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: 'srch_clnt_no=' + encodeURIComponent(clntNo) + '&srch_bnch_cd=' + BNCH
+    }).then(function (res) { return res.text(); }).then(function (txt) {
+      var json;
+      try { json = JSON.parse(txt); } catch (e) { return null; }
+      if (!json || json.result !== 'ok') return null;
+      var rows = Array.isArray(json.data) ? json.data : [];
+      return rows.map(function (r) {
+        return { admsDate: r.admsDate, dschDate: r.dschDate, admsYn: r.admsYn, wardNm: r.wardNm, roomNm: r.roomNm };
+      });
+    }).catch(function () { return null; });
+  }
+
   function fetchRecord(clntNo) {
     return crmPost(BASE_PATH, clntNo).then(function (a) {
       var b0 = (a.data && a.data[0]) || null;
@@ -95,22 +117,25 @@
       return crmPost(CNSL_PATH, clntNo).then(function (b) {
         var list = b.data || [];
         var latest = pickLatestCnsl(list);
-        return {
-          clntNo: clntNo,
-          ok: true,
-          base: {
-            clntNm: b0.clntNm, sex: b0.sex, age: b0.age, hpTelno: b0.hpTelno, orgHpTelno: b0.orgHpTelno,
-            upAddr: b0.upAddr, rmk1: b0.rmk1, rmk2: b0.rmk2,
-            mdcrMemoCnts1: b0.mdcrMemoCnts1, mdcrMemoCnts2: b0.mdcrMemoCnts2,
-            fsCmhsDt: b0.fsCmhsDt, lstCmhsDt: b0.lstCmhsDt
-          },
-          cnsl: {
-            cnslCnts: latest ? latest.cnslCnts : null,
-            cnslDate: latest ? latest.cnslDate : null,
-            cnslHm: latest ? latest.cnslHm : null,
-            count: list.length
-          }
-        };
+        return fetchAdms(clntNo).then(function (adms) {
+          return {
+            clntNo: clntNo,
+            ok: true,
+            base: {
+              clntNm: b0.clntNm, sex: b0.sex, age: b0.age, hpTelno: b0.hpTelno, orgHpTelno: b0.orgHpTelno,
+              upAddr: b0.upAddr, rmk1: b0.rmk1, rmk2: b0.rmk2,
+              mdcrMemoCnts1: b0.mdcrMemoCnts1, mdcrMemoCnts2: b0.mdcrMemoCnts2,
+              fsCmhsDt: b0.fsCmhsDt, lstCmhsDt: b0.lstCmhsDt
+            },
+            cnsl: {
+              cnslCnts: latest ? latest.cnslCnts : null,
+              cnslDate: latest ? latest.cnslDate : null,
+              cnslHm: latest ? latest.cnslHm : null,
+              count: list.length
+            },
+            adms: adms
+          };
+        });
       });
     }).catch(function (e) {
       return { clntNo: clntNo, ok: false, error: (e && e.message) || '조회 실패' };

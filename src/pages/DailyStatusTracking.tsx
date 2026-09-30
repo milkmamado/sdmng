@@ -103,6 +103,16 @@ export default function DailyStatusTracking() {
   useEffect(() => {
     fetchData();
 
+    // 일괄 저장 시 수백 번 재조회를 막기 위해 800ms 디바운스
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        fetchData();
+      }, 800);
+    };
+
     // Realtime 구독 설정 - patients 및 daily_patient_status 테이블 변경 감지
     const channel = supabase
       .channel('patient-changes')
@@ -116,7 +126,7 @@ export default function DailyStatusTracking() {
         (payload) => {
           console.log('Patient data changed:', payload);
           // 데이터 변경 시 자동으로 다시 불러오기
-          fetchData();
+          scheduleFetch();
         }
       )
       .on(
@@ -129,13 +139,14 @@ export default function DailyStatusTracking() {
         (payload) => {
           console.log('Daily patient status changed:', payload);
           // 데이터 변경 시 자동으로 다시 불러오기
-          fetchData();
+          scheduleFetch();
         }
       )
       .subscribe();
 
     // 컴포넌트 언마운트 시 구독 해제
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [selectedMonth, includeExemptPatients]);
