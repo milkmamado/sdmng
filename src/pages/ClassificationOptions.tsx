@@ -163,9 +163,9 @@ export default function ClassificationOptions() {
       if (error) throw error;
       const ids = (targets || []).map((t) => t.id);
       setReclassProgress({ done: 0, total: ids.length });
-      for (let i = 0; i < ids.length; i += 50) {
-        await callClassifyPatient(ids.slice(i, i + 50));
-        setReclassProgress({ done: Math.min(i + 50, ids.length), total: ids.length });
+      for (let i = 0; i < ids.length; i += 10) {
+        await callClassifyPatient(ids.slice(i, i + 10));
+        setReclassProgress({ done: Math.min(i + 10, ids.length), total: ids.length });
       }
       toast({ title: '재분류 완료', description: `${ids.length}명 처리를 요청했습니다.` });
       fetchAll();
