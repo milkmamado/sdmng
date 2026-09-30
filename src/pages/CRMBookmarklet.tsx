@@ -66,16 +66,15 @@ export default function CRMBookmarklet() {
         </AlertDescription>
       </Alert>
 
-      <Alert>
-        <FileCode className="h-4 w-4" />
-        <AlertDescription>
-          CRM 연동을 사용하면 클릭 한 번으로 환자 정보를 자동으로 가져올 수 있습니다.
-        </AlertDescription>
-      </Alert>
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-3">
+        <p className="text-sm">
+          <strong>v2부터는</strong> 기능이 개선돼도 북마크를 다시 바꿀 필요가 없습니다.
+        </p>
+      </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>연동 설정 방법</CardTitle>
+          <CardTitle>🔗 북마크 설치 (v2, 1회만)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
@@ -84,13 +83,23 @@ export default function CRMBookmarklet() {
                 1
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold mb-2">북마크바 표시하기</h3>
+                <h3 className="font-semibold mb-2">연동 코드 복사</h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  먼저 북마크바가 보이도록 설정하세요.
+                  사이드바의 <strong>「CRM 연동 설정」</strong> 메뉴에서 아래 버튼으로 코드를 복사합니다.
                 </p>
-                <div className="bg-muted p-3 rounded text-sm">
-                  <strong>단축키:</strong> Ctrl + Shift + B (Windows) 또는 ⌘ + Shift + B (Mac)
-                </div>
+                <Button onClick={handleCopyBookmarklet} className="w-full gap-2" size="lg">
+                  {copied ? (
+                    <>
+                      <CheckCircle className="h-5 w-5" />
+                      복사됨!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-5 w-5" />
+                      CRM 연동 코드 복사
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
@@ -99,33 +108,21 @@ export default function CRMBookmarklet() {
                 2
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold mb-2">북마크 생성</h3>
-                
+                <h3 className="font-semibold mb-2">기존 북마크에 붙여넣기</h3>
                 <div className="space-y-3">
-                  <Button onClick={handleCopyBookmarklet} className="w-full gap-2" size="lg">
-                    {copied ? (
-                      <>
-                        <CheckCircle className="h-5 w-5" />
-                        복사됨!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-5 w-5" />
-                        CRM 연동 코드 복사
-                      </>
-                    )}
-                  </Button>
-
                   <div className="border rounded p-3 bg-blue-50">
-                    <strong className="text-blue-900">방법: 새 북마크 만들기</strong>
-                    <ol className="list-decimal list-inside ml-2 mt-2 text-sm space-y-1">
-                      <li>위 "CRM 연동 코드 복사" 버튼 클릭</li>
-                      <li>아무 페이지에서 <code className="bg-blue-100 px-1">Ctrl+D</code> (또는 <code className="bg-blue-100 px-1">⌘+D</code>) 눌러 북마크 추가하고 완료</li>
-                      <li>이름: <code className="bg-blue-100 px-1">CRM 연동</code></li>
-                      <li>추가된 "CRM 연동" 북마크에 마우스 우클릭 → <strong>수정</strong> 클릭</li>
-                      <li>URL 필드에 복사한 코드 <strong>전체</strong> 붙여넣기</li>
+                    <ol className="list-decimal list-inside ml-2 text-sm space-y-1">
+                      <li>크롬 북마크바의 기존 <strong>「CRM 연동」</strong> 북마크에 마우스 우클릭 → <strong>수정</strong> 클릭</li>
+                      <li>
+                        (북마크가 없으면) 아무 페이지에서 <code className="bg-blue-100 px-1">Ctrl+D</code>로 새로 만들고 이름은{' '}
+                        <code className="bg-blue-100 px-1">CRM 연동</code>
+                      </li>
+                      <li>URL 칸의 내용을 <strong>전부 지운 뒤</strong> 복사한 코드 <strong>전체</strong>를 붙여넣기</li>
                       <li>저장</li>
                     </ol>
+                  </div>
+                  <div className="bg-muted p-3 rounded text-sm">
+                    <strong>북마크바가 보이지 않을 때:</strong> Ctrl + Shift + B (Windows) 또는 ⌘ + Shift + B (Mac)
                   </div>
                 </div>
               </div>
@@ -136,30 +133,60 @@ export default function CRMBookmarklet() {
                 3
               </div>
               <div>
-                <h3 className="font-semibold mb-2">사용 방법</h3>
-                <div className="text-sm text-muted-foreground space-y-2">
-                  <ol className="list-decimal list-inside space-y-2">
-                    <li>
-                      <strong>CRM 일괄 동기화</strong> — 관리 환자 리스트에서 「CRM 일괄 동기화」 클릭
-                      <div className="ml-6 text-xs text-gray-500">→ 열린 CRM 창에서 북마크 클릭 → 사이트에서 변경 내용 확인 후 「적용」</div>
-                    </li>
-                    <li>
-                      <strong>CRM에서 바로 보내기</strong> — CRM에서 환자 상세를 연 상태로 북마크 클릭
-                      <div className="ml-6 text-xs text-gray-500">→ 초진관리 화면이 열리며 신규 등록 폼(기존 환자면 수정 화면)이 채워집니다</div>
-                    </li>
-                    <li>
-                      <strong>기존 조회·최신화</strong> — 새 환자 등록 → 조회, 또는 「기본 정보 최신화」「휴대폰 번호 최신화」
-                      <div className="ml-6 text-xs text-gray-500">→ CRM 창에서 북마크 클릭 → 환자명 더블클릭 (기존과 동일)</div>
-                    </li>
-                  </ol>
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                    <p className="text-blue-900 text-xs font-semibold">
-                      ⚠️ 중요: 북마크 클릭 전에 미리 CRM 프로그램에 로그인해 두어야 합니다. 로그인이 안 되어 있으면 데이터를 가져올 수 없습니다!
-                    </p>
-                  </div>
-                </div>
+                <h3 className="font-semibold mb-2">설치 후 사용</h3>
+                <p className="text-sm text-muted-foreground">
+                  북마크는 <strong>CRM 화면</strong>에서만 누릅니다. 사이트에서 「CRM 일괄 동기화」나 「새 환자 등록 → 조회」를
+                  눌러 CRM 창을 연 뒤, 그 CRM 창에서 북마크를 클릭하면 됩니다.
+                </p>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">📌 북마크 쓰임새 3가지</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="border rounded-lg p-3">
+              <p className="font-medium mb-1">① 일괄 동기화</p>
+              <p className="text-sm text-muted-foreground">
+                사이트 환자 리스트에서 <strong>「CRM 일괄 동기화」</strong>를 눌러 시작합니다.
+              </p>
+            </div>
+            <div className="border rounded-lg p-3">
+              <p className="font-medium mb-1">② CRM에서 바로 보내기</p>
+              <p className="text-sm text-muted-foreground">
+                CRM에서 환자 상세 화면을 연 상태로 클릭하면 초진관리 등록 폼이 열립니다.
+              </p>
+            </div>
+            <div className="border rounded-lg p-3">
+              <p className="font-medium mb-1">③ 기존 조회·최신화</p>
+              <p className="text-sm text-muted-foreground">
+                사이트 「새 환자 등록 → 조회」, 「기본 정보 최신화」, 「휴대폰 번호 최신화」 버튼으로 열린 CRM 창에서 클릭한 뒤
+                환자를 더블클릭합니다.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">⚠️ 공통 주의</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
+            <ul className="text-sm space-y-1">
+              <li>• <strong>크롬 브라우저</strong>에서만 작동합니다</li>
+              <li>• 북마크를 누르기 전에 <strong>CRM에 로그인</strong>되어 있어야 합니다</li>
+              <li>• 사이트와 CRM을 <strong>같은 크롬 창·같은 모드</strong>에서 쓰세요 (사이트는 일반 창, CRM은 시크릿 창처럼 섞이면 연동되지 않습니다)</li>
+              <li>• 연동이 안 되면 두 창을 모두 닫고 크롬 시크릿 창(<code className="bg-blue-100 px-1">Ctrl+Shift+N</code>)에서 사이트 → CRM 순서로 다시 열어보세요</li>
+              <li>• <strong>「CRM 로그인이 만료됐습니다」</strong>가 뜨면 CRM에 다시 로그인한 뒤 처음부터 시작하세요</li>
+              <li>• CRM 창이 로그인 화면으로 열렸다면, 로그인 후 사이트에서 다시 시작해 주세요</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
