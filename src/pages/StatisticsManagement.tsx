@@ -1162,7 +1162,7 @@ export default function StatisticsManagement() {
       
       query = applyBranchFilter(query);
 
-      const { data: allPatients, error } = await query;
+      const { data: allPatients, error } = await fetchAllQuery(query);
 
       if (error) throw error;
 
@@ -1212,7 +1212,7 @@ export default function StatisticsManagement() {
         query = query.eq('assigned_manager', selectedManager);
       }
 
-      const { data: patients, error } = await query;
+      const { data: patients, error } = await fetchAllQuery(query);
 
       if (error) throw error;
 
