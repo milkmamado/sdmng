@@ -652,8 +652,8 @@ export default function UserManual() {
 
               <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
                 <p className="text-sm">
-                  <strong>💡 활용 팁:</strong> 매일 아침 전날 환자들의 상태를 입력하는 습관을 들이면 
-                  정확한 환자 관리 현황을 추적할 수 있습니다.
+                  <strong>💡 활용 팁:</strong> 입원·재원·퇴원은 CRM 일괄 동기화로 채워지니, 매일 아침
+                  동기화 후 외래·전화F/U 등 나머지 상태만 입력하면 됩니다.
                 </p>
               </div>
             </div>
