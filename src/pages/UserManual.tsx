@@ -246,60 +246,6 @@ export default function UserManual() {
                     </ul>
                   </div>
 
-                  {/* 방법 2 — 기존 방식 */}
-                  <div className="border rounded-lg p-4">
-                    <p className="font-semibold mb-3">방법 2 — 사이트에서 조회 (기존 방식)</p>
-                    <ol className="space-y-3 ml-4">
-                      <li className="flex gap-2">
-                        <span className="font-bold text-primary">1.</span>
-                        <div>
-                          우측 상단 <Badge>새 환자 등록</Badge> 버튼 클릭
-                        </div>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="font-bold text-primary">2.</span>
-                        <div>
-                          조회 창에서 <strong>환자명</strong>과 <strong>전화번호</strong> 입력 후 <Badge>조회</Badge> 버튼 클릭
-                          <div className="mt-1 text-sm text-muted-foreground ml-4">
-                            → CRM 시스템 페이지가 새 탭으로 열립니다
-                          </div>
-                        </div>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="font-bold text-primary">3.</span>
-                        <div>
-                          <strong>CRM 연동 북마크 사용:</strong>
-                          <ul className="mt-2 space-y-1 ml-4 text-sm">
-                            <li>• 북마크바의 <Badge variant="outline">CRM 연동</Badge> 북마크 클릭</li>
-                            <li>• 자동으로 환자 검색이 실행됩니다</li>
-                            <li>• 해당 환자명을 더블클릭하면 상세 정보가 자동으로 추출됩니다</li>
-                          </ul>
-                          <div className="mt-2 bg-blue-50 border-l-4 border-blue-500 p-3">
-                            <p className="text-xs">
-                              <strong>⚠️ 중요:</strong> 북마크 클릭 전에 미리 CRM 프로그램에 로그인해 두어야 합니다. 
-                              로그인이 안 되어 있으면 데이터를 가져올 수 없습니다!
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="font-bold text-primary">4.</span>
-                        <div>
-                          자동으로 가져온 정보 확인 및 추가 정보 입력:
-                          <ul className="mt-2 space-y-1 ml-4 text-sm">
-                            <li>• <strong>자동 입력:</strong> 고객번호, 환자명, 연락처, 나이, 주소, 내원동기 등</li>
-                            <li>• <strong>수동 입력:</strong> 유입/실패, 입원/외래, 담당매니저, 주치의 정보 등</li>
-                            <li>• <strong>선택 입력:</strong> 보호자 정보, 추가 메모</li>
-                          </ul>
-                        </div>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="font-bold text-primary">5.</span>
-                        <div><Badge>등록</Badge> 버튼으로 완료</div>
-                      </li>
-                    </ol>
-                  </div>
-
                   {/* 두 방법 공통 안내 */}
                   <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
                     <p className="text-sm leading-relaxed">
@@ -658,7 +604,7 @@ export default function UserManual() {
                 <ol className="space-y-2 ml-4">
                   <li>1. 상단에서 월 선택 (캘린더 또는 화살표 버튼)</li>
                   <li>2. 환자 리스트에서 상태를 기록할 환자의 날짜 칸 클릭</li>
-                  <li>3. 드롭다운에서 해당 날짜 환자 상태 선택:
+                  <li>3. 드롭다운에서 해당 날짜 환자 상태 선택 (직접 입력: 외래·낮병동·기타·전화F/U):
                     <div className="mt-2 space-y-1 ml-4">
                       <div><Badge className="bg-blue-500">입원</Badge> - 신규 또는 재진 입원 모두</div>
                       <div><Badge className="bg-indigo-500">재원</Badge> - 입원 중으로 입/퇴원일을 제외하고 재원으로 표기</div>
@@ -668,6 +614,7 @@ export default function UserManual() {
                       <div><Badge className="bg-gray-500">퇴원</Badge> - 퇴원</div>
                     </div>
                   </li>
+                  <li className="text-sm text-muted-foreground">※ 입원·재원·퇴원은 「CRM 일괄 동기화」로 자동 입력되어 직접 선택할 수 없습니다. (이미 적힌 칸의 메모 수정·삭제는 가능)</li>
                   
                 </ol>
               </div>
@@ -1071,26 +1018,19 @@ export default function UserManual() {
                <Separator />
 
                <div>
-                 <h4 className="font-semibold mb-3">📌 북마크 쓰임새 3가지</h4>
-                 <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="border rounded-lg p-3">
-                      <p className="font-medium mb-1">① 일괄 동기화</p>
-                      <p className="text-sm text-muted-foreground">
-                        사이트 환자 리스트에서 시작합니다. CRM 입원정보도 함께 가져와 일별 환자 상태에 자동 반영됩니다.{' '}
-                        <span className="text-xs">(3. 관리 환자 리스트 참고)</span>
-                      </p>
-                    </div>
+                 <h4 className="font-semibold mb-3">📌 북마크 쓰임새 2가지</h4>
+                 <div className="grid gap-3 sm:grid-cols-2">
+                   <div className="border rounded-lg p-3">
+                     <p className="font-medium mb-1">① 일괄 동기화</p>
+                     <p className="text-sm text-muted-foreground">
+                       사이트 환자 리스트에서 시작합니다. CRM 입원정보도 함께 가져와 일별 환자 상태에 자동 반영됩니다.{' '}
+                       <span className="text-xs">(3. 관리 환자 리스트 참고)</span>
+                     </p>
+                   </div>
                    <div className="border rounded-lg p-3">
                      <p className="font-medium mb-1">② CRM에서 바로 보내기</p>
                      <p className="text-sm text-muted-foreground">
                        CRM 환자 상세 화면에서 클릭합니다. <span className="text-xs">(2. 초진관리 참고)</span>
-                     </p>
-                   </div>
-                   <div className="border rounded-lg p-3">
-                     <p className="font-medium mb-1">③ 기존 조회·최신화</p>
-                     <p className="text-sm text-muted-foreground">
-                       사이트 「새 환자 등록 → 조회」, 「기본 정보 최신화」, 「휴대폰 번호 최신화」 버튼으로 열린 CRM 창에서
-                       클릭한 뒤 환자를 더블클릭합니다.
                      </p>
                    </div>
                  </div>

@@ -135,8 +135,8 @@ export default function CRMBookmarklet() {
               <div>
                 <h3 className="font-semibold mb-2">설치 후 사용</h3>
                 <p className="text-sm text-muted-foreground">
-                  북마크는 <strong>CRM 화면</strong>에서만 누릅니다. 사이트에서 「CRM 일괄 동기화」나 「새 환자 등록 → 조회」를
-                  눌러 CRM 창을 연 뒤, 그 CRM 창에서 북마크를 클릭하면 됩니다.
+                  북마크는 <strong>CRM 화면</strong>에서만 누릅니다. 사이트에서 「CRM 일괄 동기화」를 눌러 연 CRM 창이나,
+                  CRM 환자 상세 화면에서 북마크를 클릭하면 됩니다.
                 </p>
               </div>
             </div>
@@ -146,10 +146,10 @@ export default function CRMBookmarklet() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">📌 북마크 쓰임새 3가지</CardTitle>
+          <CardTitle className="text-base">📌 북마크 쓰임새 2가지</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="border rounded-lg p-3">
               <p className="font-medium mb-1">① 일괄 동기화</p>
               <p className="text-sm text-muted-foreground">
@@ -162,13 +162,6 @@ export default function CRMBookmarklet() {
               <p className="font-medium mb-1">② CRM에서 바로 보내기</p>
               <p className="text-sm text-muted-foreground">
                 CRM에서 환자 상세 화면을 연 상태로 클릭하면 초진관리 등록 폼이 열립니다.
-              </p>
-            </div>
-            <div className="border rounded-lg p-3">
-              <p className="font-medium mb-1">③ 기존 조회·최신화</p>
-              <p className="text-sm text-muted-foreground">
-                사이트 「새 환자 등록 → 조회」, 「기본 정보 최신화」, 「휴대폰 번호 최신화」 버튼으로 열린 CRM 창에서 클릭한 뒤
-                환자를 더블클릭합니다.
               </p>
             </div>
           </div>

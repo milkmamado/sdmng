@@ -105,7 +105,7 @@ export default function Layout({ children }: LayoutProps) {
             
             <div className="flex items-center gap-3">
               <BranchSwitcher />
-              <DataMigration />
+              {userRole === 'master' && <DataMigration />}
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

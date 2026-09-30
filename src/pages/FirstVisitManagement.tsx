@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
 import { PatientBasicForm } from "@/components/PatientBasicForm";
-import { PatientLookupDialog } from "@/components/PatientLookupDialog";
+// PatientLookupDialog: 화면에서 숨김(파일은 유지)
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -488,12 +488,10 @@ export default function FirstVisitManagement() {
           <Heart className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">초진관리</h1>
         </div>
-        {userRole === 'manager' && (
-          <Button onClick={() => { localStorage.removeItem('crm_update_mode'); setShowLookupDialog(true); }} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            새 환자 등록
-          </Button>
-        )}
+        {/* 「새 환자 등록」 버튼 숨김 — 신환은 CRM 「바로 보내기」(#crm_import)로 등록 */}
+        <p className="text-sm text-muted-foreground">
+          신환 등록은 CRM 환자 화면에서 북마크를 눌러 「바로 보내기」로 합니다.
+        </p>
       </div>
 
       <Card className="w-full overflow-x-auto">
@@ -739,12 +737,7 @@ export default function FirstVisitManagement() {
         </CardContent>
       </Card>
 
-      {/* 고객 정보 조회 다이얼로그 */}
-      <PatientLookupDialog
-        open={showLookupDialog}
-        onOpenChange={setShowLookupDialog}
-        onProceedToRegistration={handleProceedToRegistration}
-      />
+      {/* 고객 정보 조회 다이얼로그(PatientLookupDialog) 숨김 — 파일은 유지 */}
 
       {/* 새 환자 등록 다이얼로그 */}
       <Dialog open={showFullForm} onOpenChange={setShowFullForm}>

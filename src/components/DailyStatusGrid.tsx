@@ -183,6 +183,9 @@ export function DailyStatusGrid({
   const [scrollLeft, setScrollLeft] = useState(0);
 
   const statusTypes = ['입원', '퇴원', '재원', '낮병동', '외래', '기타', '전화F/U'];
+  // 입원·재원·퇴원은 CRM 일괄 동기화 전용 — 직접 입력 선택지에서 제외
+  const crmOnlyStatusTypes = ['입원', '재원', '퇴원'];
+  const manualStatusTypes = statusTypes.filter(t => !crmOnlyStatusTypes.includes(t));
   
   // 날짜별 필터 상태: { 날짜(1-31): [선택된 상태 타입들] }
   const [dateFilters, setDateFilters] = useState<Record<number, string[]>>({});
@@ -1607,8 +1610,16 @@ export function DailyStatusGrid({
           </DialogHeader>
           
           <div className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              입원·재원·퇴원은 「CRM 일괄 동기화」로 자동 입력됩니다.
+            </p>
             <div>
               <Label htmlFor="status">상태 선택</Label>
+              {crmOnlyStatusTypes.includes(selectedStatus) && (
+                <p className="text-sm text-muted-foreground mb-1">
+                  현재: {selectedStatus} (CRM 동기화로 관리)
+                </p>
+              )}
               <Select 
                 value={selectedStatus} 
                 onValueChange={(value) => {
@@ -1627,8 +1638,8 @@ export function DailyStatusGrid({
                     const patient = patients.find(p => p.id === selectedCell?.patientId);
                     const isShortTerm = patient ? isShortTermTreatmentPatient(patient.diagnosis_category || '') : false;
                     const availableStatuses = isShortTerm 
-                      ? ['입원', '외래', '퇴원', '기타']
-                      : statusTypes;
+                      ? ['외래', '기타']
+                      : manualStatusTypes;
                     
                     return availableStatuses.map(type => (
                       <SelectItem key={type} value={type}>
@@ -2620,6 +2631,9 @@ export function DailyStatusGrid({
           </DialogHeader>
           
           <div className="space-y-6">
+            <p className="text-xs text-muted-foreground">
+              입원·재원·퇴원은 「CRM 일괄 동기화」로 자동 입력됩니다.
+            </p>
             {/* 상태 선택 */}
             <div>
               <Label>상태 선택</Label>
@@ -2628,7 +2642,7 @@ export function DailyStatusGrid({
                   <SelectValue placeholder="상태를 선택하세요" />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusTypes.map(type => (
+                  {manualStatusTypes.map(type => (
                     <SelectItem key={type} value={type}>
                       {type}
                     </SelectItem>
