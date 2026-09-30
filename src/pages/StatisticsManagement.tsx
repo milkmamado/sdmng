@@ -20,6 +20,7 @@ interface ManagerStats {
   total_revenue: number;
   inpatient_revenue: number;
   outpatient_revenue: number;
+  package_revenue: number;
   non_covered_revenue: number;
   avg_revenue_per_patient: number;
   status_breakdown: {
@@ -412,6 +413,7 @@ export default function StatisticsManagement() {
             total_revenue: 0,
             inpatient_revenue: 0,
             outpatient_revenue: 0,
+            package_revenue: 0,
             non_covered_revenue: 0,
             avg_revenue_per_patient: 0,
             status_breakdown: {
@@ -446,6 +448,7 @@ export default function StatisticsManagement() {
                 total_revenue: 0,
                 inpatient_revenue: 0,
                 outpatient_revenue: 0,
+                package_revenue: 0,
                 non_covered_revenue: 0,
                 avg_revenue_per_patient: 0,
                 status_breakdown: {
@@ -469,6 +472,7 @@ export default function StatisticsManagement() {
               total_revenue: 0,
               inpatient_revenue: 0,
               outpatient_revenue: 0,
+              package_revenue: 0,
               non_covered_revenue: 0,
               avg_revenue_per_patient: 0,
               status_breakdown: {
@@ -526,7 +530,8 @@ export default function StatisticsManagement() {
           let query = supabase
             .from('package_transactions')
             .select('amount, non_covered_amount, transaction_type, patient_id')
-            .in('transaction_type', ['inpatient_revenue', 'outpatient_revenue'])
+            .in('transaction_type', ['inpatient_revenue', 'outpatient_revenue', 'deposit_in'])
+            .order('id', { ascending: true })
             .range(from, from + PAGE_SIZE - 1);
 
           query = applyBranchFilter(query);
@@ -550,17 +555,7 @@ export default function StatisticsManagement() {
       const allTransactions = await fetchAllTransactions();
 
       // 당월 거래 가져오기
-      let monthlyTransactionsQuery = supabase
-        .from('package_transactions')
-        .select('amount, non_covered_amount, transaction_type, patient_id')
-        .in('transaction_type', ['inpatient_revenue', 'outpatient_revenue'])
-        .gte('transaction_date', queryStartDate)
-        .lte('transaction_date', queryEndDate);
-
-      // 지점 필터 적용
-      monthlyTransactionsQuery = applyBranchFilter(monthlyTransactionsQuery);
-
-      // 매니저 필터 적용
+      let monthlyManagerPatientIds: string[] | null = null;
       if (!isMasterOrAdmin || (selectedManager !== 'all' && selectedManager)) {
         const targetManager = isMasterOrAdmin ? selectedManager : user?.id;
         let managerPatientsQuery = supabase
@@ -569,16 +564,25 @@ export default function StatisticsManagement() {
           .eq('assigned_manager', targetManager);
         managerPatientsQuery = applyBranchFilter(managerPatientsQuery);
         const { data: managerPatients } = await managerPatientsQuery;
-        const managerPatientIds = managerPatients?.map(p => p.id) || [];
-        if (managerPatientIds.length > 0) {
-          monthlyTransactionsQuery = monthlyTransactionsQuery.in('patient_id', managerPatientIds);
-        } else {
-          // 매니저의 환자가 없으면 빈 결과 반환
-          monthlyTransactionsQuery = monthlyTransactionsQuery.in('patient_id', []);
-        }
+        monthlyManagerPatientIds = managerPatients?.map(p => p.id) || [];
       }
 
-      const { data: monthlyTransactions } = await monthlyTransactionsQuery;
+      const { data: monthlyTransactions, error: monthlyTransactionsError } = await fetchAllRows((from, to) => {
+        let query = supabase
+          .from('package_transactions')
+          .select('amount, non_covered_amount, transaction_type, patient_id')
+          .in('transaction_type', ['inpatient_revenue', 'outpatient_revenue', 'deposit_in'])
+          .gte('transaction_date', queryStartDate)
+          .lte('transaction_date', queryEndDate)
+          .order('id', { ascending: true });
+
+        query = applyBranchFilter(query);
+        if (monthlyManagerPatientIds !== null) {
+          query = query.in('patient_id', monthlyManagerPatientIds);
+        }
+        return query.range(from, to);
+      });
+      if (monthlyTransactionsError) throw monthlyTransactionsError;
 
       // 환자 ID별 매니저 정보 매핑 (매출은 관리 상태와 무관하게 전체 환자 기준)
       const patientManagerMap = new Map<string, string>();
@@ -603,6 +607,7 @@ export default function StatisticsManagement() {
             total_revenue: 0,
             inpatient_revenue: 0,
             outpatient_revenue: 0,
+            package_revenue: 0,
             non_covered_revenue: 0,
             avg_revenue_per_patient: 0,
             status_breakdown: {
@@ -624,6 +629,7 @@ export default function StatisticsManagement() {
       let monthlyNonCoveredRevenue = 0;
       let monthlyInpatientRevenue = 0;
       let monthlyOutpatientRevenue = 0;
+      let monthlyPackageRevenue = 0;
 
       monthlyTransactions?.forEach(transaction => {
         const managerId = patientManagerMap.get(transaction.patient_id);
@@ -642,6 +648,9 @@ export default function StatisticsManagement() {
         } else if (transaction.transaction_type === 'outpatient_revenue') {
           stats.outpatient_revenue += transaction.amount || 0;
           monthlyOutpatientRevenue += transaction.amount || 0;
+        } else if (transaction.transaction_type === 'deposit_in') {
+          stats.package_revenue += transaction.amount || 0;
+          monthlyPackageRevenue += transaction.amount || 0;
         }
         
         // 당월 비급여 매출 = 입원/외래 비급여액 합산
@@ -695,12 +704,13 @@ export default function StatisticsManagement() {
 
       // 평균 계산 - 당월 매출 / 11월 유입환자 수
       const statsArray = Array.from(managerMap.values()).map(stats => {
-        const monthlyTotal = stats.inpatient_revenue + stats.outpatient_revenue;
+        const monthlyTotal = stats.inpatient_revenue + stats.outpatient_revenue + stats.package_revenue;
         const inflowCount = managerInflowCountMap.get(stats.manager_id) || 0;
         
         console.log('[Statistics] Manager:', stats.manager_name, {
           inpatient_revenue: stats.inpatient_revenue,
           outpatient_revenue: stats.outpatient_revenue,
+          package_revenue: stats.package_revenue,
           monthlyTotal,
           inflowCount,
           avg: inflowCount > 0 ? Math.round(monthlyTotal / inflowCount) : 0
@@ -732,6 +742,7 @@ export default function StatisticsManagement() {
                 total_revenue: 0,
                 inpatient_revenue: 0,
                 outpatient_revenue: 0,
+                package_revenue: 0,
                 non_covered_revenue: 0,
                 avg_revenue_per_patient: 0,
                 status_breakdown: {
@@ -765,7 +776,7 @@ export default function StatisticsManagement() {
 
       totals.totalPatients = totalAllPatientsCount; // 유입일 정확히 입력된 전체 관리 중 환자
       totals.monthPatients = monthNewPatients.length; // 신규 등록 (유입+전화+방문+실패)
-      totals.monthlyRevenue = monthlyRevenue; // 당월 매출 (입원+외래 총진료비)
+      totals.monthlyRevenue = monthlyRevenue; // 당월 매출 (예치금 입금+입원/외래 총진료비)
       
       // 객단가 계산은 아래에서 newPatientsCount(11월 유입환자 카드 기준)로 계산
       // 일단 여기서는 0으로 설정
@@ -1403,7 +1414,7 @@ export default function StatisticsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalStats.totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">전체 기간</p>
+            <p className="text-xs text-muted-foreground">예치금 입금 + 입원·외래 매출</p>
           </CardContent>
         </Card>
         <Card>
@@ -1413,7 +1424,7 @@ export default function StatisticsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalStats.monthlyRevenue)}</div>
-            <p className="text-xs text-muted-foreground">선택한 월</p>
+            <p className="text-xs text-muted-foreground">예치금 입금 + 입원·외래 매출</p>
           </CardContent>
         </Card>
         <Card>
@@ -1433,6 +1444,7 @@ export default function StatisticsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalStats.avgRevenuePerPatient)}</div>
+            <p className="text-xs text-muted-foreground">당월 매출 ÷ 당월 유입(관리 중)</p>
           </CardContent>
         </Card>
       </div>
@@ -1664,6 +1676,7 @@ export default function StatisticsManagement() {
                         total_revenue: 0,
                         inpatient_revenue: 0,
                         outpatient_revenue: 0,
+                        package_revenue: 0,
                         non_covered_revenue: 0,
                         avg_revenue_per_patient: 0,
                         status_breakdown: {
@@ -1698,7 +1711,7 @@ export default function StatisticsManagement() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-600">총 매출</span>
                       <span className="text-lg font-bold text-primary">
-                        {formatCurrency(stats.inpatient_revenue + stats.outpatient_revenue)}
+                        {formatCurrency(stats.inpatient_revenue + stats.outpatient_revenue + stats.package_revenue)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center pl-4">
@@ -1711,6 +1724,12 @@ export default function StatisticsManagement() {
                       <span className="text-xs text-gray-500">외래 매출</span>
                       <span className="text-sm font-semibold text-green-600">
                         {formatCurrency(stats.outpatient_revenue)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pl-4">
+                      <span className="text-xs text-gray-500">패키지(예치금 입금)</span>
+                      <span className="text-sm font-semibold text-primary">
+                        {formatCurrency(stats.package_revenue)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center pl-4">
