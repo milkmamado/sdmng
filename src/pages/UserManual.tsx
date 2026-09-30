@@ -422,7 +422,7 @@ export default function UserManual() {
 
                 <p className="text-xs text-muted-foreground mt-2">
                   CRM 창이 로그인 화면으로 열렸다면, 로그인 후 사이트에서 「CRM 일괄 동기화」를 다시 눌러주세요.
-                  입원정보 반영도 기존 북마크 그대로 되면, 새로 설치할 필요는 없습니다.
+                  입원정보 반영도 기존 북마크 그대로 쓰면 됩니다. 새로 설치할 필요는 없습니다.
                 </p>
               </div>
 
