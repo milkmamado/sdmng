@@ -16,6 +16,7 @@ import RiskManagement from "./pages/RiskManagement";
 import ExemptPatientManagement from "./pages/ExemptPatientManagement";
 import StatisticsManagement from "./pages/StatisticsManagement";
 import UnclassifiedPatientList from "./pages/UnclassifiedPatientList";
+import CrmSyncLogs from "./pages/CrmSyncLogs";
 
 import RevenueBulkManagement from "./pages/RevenueBulkManagement";
 import UserManual from "./pages/UserManual";
@@ -163,6 +164,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="master">
               <ClassificationOptions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="crm-sync-logs"
+          element={
+            <ProtectedRoute allowedRoles={['master', 'admin']}>
+              <CrmSyncLogs />
             </ProtectedRoute>
           }
         />
