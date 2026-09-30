@@ -56,7 +56,7 @@ export default function CRMBookmarklet() {
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex items-center gap-3 mb-6">
         <BookMarked className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold">CRM 연동 설정</h1>
+        <h1 className="text-3xl font-bold">CRM 연동</h1>
       </div>
 
       <Alert className="border-primary">
@@ -85,7 +85,7 @@ export default function CRMBookmarklet() {
               <div className="flex-1">
                 <h3 className="font-semibold mb-2">연동 코드 복사</h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  사이드바의 <strong>「CRM 연동 설정」</strong> 메뉴에서 아래 버튼으로 코드를 복사합니다.
+                  아래 버튼으로 코드를 복사합니다.
                 </p>
                 <Button onClick={handleCopyBookmarklet} className="w-full gap-2" size="lg">
                   {copied ? (
