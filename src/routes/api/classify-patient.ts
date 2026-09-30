@@ -158,7 +158,7 @@ export const Route = createFileRoute('/api/classify-patient')({
           const { data: patients, error: fetchError } = await supabase
             .from('patients')
             .select(
-              'id, counseling_content, diagnosis_category, diagnosis_detail, diagnosis_raw, diagnosis_source, diagnosis_needs_review, hospital_category, hospital_branch, hospital_raw, hospital_source, hospital_needs_review',
+              'id, counseling_content, treatment_memo_2, diagnosis_category, diagnosis_detail, diagnosis_raw, diagnosis_source, diagnosis_needs_review, hospital_category, hospital_branch, hospital_raw, hospital_source, hospital_needs_review',
             )
             .in('id', patientIds);
 
@@ -172,10 +172,15 @@ export const Route = createFileRoute('/api/classify-patient')({
             processed++;
             try {
               const text: string | null = p.counseling_content;
-              if (!text || !text.trim()) continue; // 상담내용 없으면 건너뜀 (기존 값 유지)
+              const kcd: string | null = p.treatment_memo_2;
+              const hasText = !!(text && text.trim());
+              const hasKcd = !!(kcd && kcd.trim());
+              // 상담내용·상병코드 둘 다 비어 있을 때만 건너뜀 (코드만 있는 환자도 분류)
+              if (!hasText && !hasKcd) continue;
 
               const { data: result, error: rpcError } = await supabase.rpc('classify_patient_text', {
-                p_text: text,
+                p_text: text ?? '',
+                p_kcd: kcd ?? null,
               });
               if (rpcError) throw rpcError;
 
@@ -201,9 +206,11 @@ export const Route = createFileRoute('/api/classify-patient')({
                   updatePayload[detField] = r.detail ?? null;
                   updatePayload[rawField] = r.raw ?? null;
                   updatePayload[sourceField] = 'rule';
-                  updatePayload[reviewField] = false;
+                  // 상담내용과 상병코드가 충돌하면 true (hospital 쪽엔 없으므로 결과적으로 false)
+                  updatePayload[reviewField] = r.needs_review === true;
                 } else {
-                  // 규칙 실패 → AI 폴백
+                  // 규칙 실패 → AI 폴백: 상담내용이 없으면 AI를 부르지 않고 이 kind는 그대로 둠
+                  if (!hasText) continue;
                   // 이미 AI 제안이 걸려 있고 원문이 그대로면 AI를 다시 부르지 않음
                   const currentRaw = (p as any)[rawField];
                   const reuseExistingAi =
@@ -216,7 +223,7 @@ export const Route = createFileRoute('/api/classify-patient')({
                   try {
                     const ai = await classifyWithAI(
                       kind,
-                      text,
+                      text ?? '',
                       isDx ? dxMap.categories : hsMap.categories,
                       isDx ? dxMap.detailsByParent : hsMap.detailsByParent,
                     );
