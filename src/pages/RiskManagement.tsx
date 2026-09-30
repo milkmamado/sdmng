@@ -193,8 +193,8 @@ export default function RiskManagement() {
       for (const patient of patientsData || []) {
         const lastCheckDate = lastCheckMap.get(patient.id);
         
-        // last_visit_date 동기화가 필요한 경우 수집
-        if (lastCheckDate && patient.last_visit_date !== lastCheckDate) {
+        // last_visit_date 동기화: 달력 날짜가 저장된 값보다 늦을 때만(또는 비어 있을 때만) 저장
+        if (lastCheckDate && (!patient.last_visit_date || lastCheckDate > String(patient.last_visit_date).slice(0, 10))) {
           lastVisitUpdates.push({ id: patient.id, last_visit_date: lastCheckDate });
           patient.last_visit_date = lastCheckDate; // 로컬 데이터도 업데이트
         }

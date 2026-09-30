@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranchFilter } from "@/hooks/useBranchFilter";
 import { useCrossView } from "@/hooks/useCrossView";
+import { CrmBulkSyncDialog } from "@/components/CrmBulkSyncDialog";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -383,9 +384,14 @@ export default function PatientListManagement() {
         const actualVisitData = statusData.filter(s => 
           actualVisitStatuses.includes(s.status_type) && s.status_date <= todayStr
         );
-        const last_visit_date = actualVisitData.length > 0 
+        const calendarLastVisit = actualVisitData.length > 0 
           ? actualVisitData[0].status_date 
           : null;
+        // 달력 계산값과 DB 저장값(CRM 동기화 포함) 중 더 늦은 날짜를 표시 (저장하지 않음)
+        const dbLastVisit = patient.last_visit_date ? String(patient.last_visit_date).slice(0, 10) : null;
+        const last_visit_date = calendarLastVisit && dbLastVisit
+          ? (calendarLastVisit > dbLastVisit ? calendarLastVisit : dbLastVisit)
+          : (calendarLastVisit || dbLastVisit);
 
         // management_status 자동 업데이트 로직
         const lastCheckDate = lastCheckMap.get(patient.id);
@@ -2050,6 +2056,7 @@ export default function PatientListManagement() {
                 진단·병원 확인 필요만
                 <span className="text-orange-600 font-medium">({needsReviewCount}명)</span>
               </label>
+              <CrmBulkSyncDialog onApplied={fetchPatients} />
               <MonthFilter
                 selectedMonth={selectedMonth}
                 onMonthChange={setSelectedMonth}
