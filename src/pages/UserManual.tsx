@@ -470,11 +470,13 @@ export default function UserManual() {
                     <li>• CRM에 값이 없으면 기존 값 유지</li>
                     <li>• 최종 내원일은 더 늦은 날짜로만 바뀜</li>
                     <li>• 상담 기록이 여러 건인 환자는 기존 상담내용 유지</li>
+                    <li>• 달력의 다른 상태(외래·기타)는 절대 지우지 않음</li>
                   </ul>
                 </div>
 
                 <p className="text-xs text-muted-foreground mt-2">
                   CRM 창이 로그인 화면으로 열렸다면, 로그인 후 사이트에서 「CRM 일괄 동기화」를 다시 눌러주세요.
+                  입원정보 반영도 기존 북마크 그대로 되면, 새로 설치할 필요는 없습니다.
                 </p>
               </div>
 
