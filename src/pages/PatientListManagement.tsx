@@ -1718,16 +1718,6 @@ export default function PatientListManagement() {
           </div>
           <div className="flex items-center gap-2">
             <p className="text-xs text-muted-foreground">패키지는 「CRM 일괄 동기화」로 자동 반영됩니다.</p>
-            {detailReadOnly ? null : (<>
-            <Button
-              onClick={handleDeletePackageData}
-              variant="destructive"
-              size="sm"
-              className="gap-2"
-            >
-              내역삭제
-            </Button>
-            </>)}
           </div>
         </div>
 
