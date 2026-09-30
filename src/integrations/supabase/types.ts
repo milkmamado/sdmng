@@ -222,6 +222,27 @@ export type Database = {
         }
         Relationships: []
       }
+      kcd_diagnosis_map: {
+        Row: {
+          category: string
+          code3: string
+          detail: string | null
+          note: string | null
+        }
+        Insert: {
+          category: string
+          code3: string
+          detail?: string | null
+          note?: string | null
+        }
+        Update: {
+          category?: string
+          code3?: string
+          detail?: string | null
+          note?: string | null
+        }
+        Relationships: []
+      }
       manager_supervisors: {
         Row: {
           created_at: string
@@ -1061,7 +1082,9 @@ export type Database = {
         Args: { _target: string; _viewer: string }
         Returns: boolean
       }
-      classify_patient_text: { Args: { p_text: string }; Returns: Json }
+      classify_patient_text:
+        | { Args: { p_text: string }; Returns: Json }
+        | { Args: { p_kcd: string; p_text: string }; Returns: Json }
       get_next_cycle_number: { Args: { patient_uuid: string }; Returns: number }
       has_role:
         | {
