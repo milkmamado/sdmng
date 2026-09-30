@@ -10,7 +10,7 @@ import { RefreshCw } from 'lucide-react';
 import { callClassifyPatient } from '@/lib/classifyPatient';
 import {
   CRM_ORIGIN, CRM_MAIN_URL, CrmRecord, diffPatient, describeChange, normalizeName, encodeHashPayload,
-  ADMS_SYNC_START, buildAdmissionDays, diffDailyStatus, localToday, mdLabel, DailyDiff,
+  ADMS_SYNC_START, buildAdmissionDays, diffDailyStatus, localToday, mdLabel, DailyDiff, addDaysStr,
 } from '@/lib/crmSync';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -20,7 +20,19 @@ const SELECT_COLS =
 const TREATMENT_END_DIAG = ['부인과 수술 후 회복', '척추질환', '척추관절'];
 
 interface Planned { patient: any; changes: Record<string, any>; days: DailyDiff; admittedNow: boolean }
-const EMPTY_DAYS: DailyDiff = { inserts: [], updates: [], conflicts: [] };
+const EMPTY_DAYS: DailyDiff = { inserts: [], updates: [], conflicts: [], removals: [] };
+
+/** 날짜 연속 + 같은 상태면 한 구간으로 묶기 */
+function groupRuns(items: { date: string; existing: string }[]) {
+  const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date));
+  const runs: { start: string; end: string; t: string; n: number }[] = [];
+  for (const it of sorted) {
+    const last = runs[runs.length - 1];
+    if (last && last.t === it.existing && addDaysStr(last.end, 1) === it.date) { last.end = it.date; last.n++; }
+    else runs.push({ start: it.date, end: it.date, t: it.existing, n: 1 });
+  }
+  return runs.map((r) => `${r.start === r.end ? mdLabel(r.start) : `${mdLabel(r.start)}~${mdLabel(r.end)}`} ${r.t} ${r.n}칸`);
+}
 
 export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
   const { toast } = useToast();
@@ -32,19 +44,21 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
   const [planned, setPlanned] = useState<Planned[]>([]);
   const [nameMismatch, setNameMismatch] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
-  const [applyResult, setApplyResult] = useState<{ ok: number; failed: number; daysSaved: number; daysFailed: number } | null>(null);
+  const [applyResult, setApplyResult] = useState<{ ok: number; failed: number; daysSaved: number; daysFailed: number; removed: number; removeFailed: number } | null>(null);
   const [comparing, setComparing] = useState(false);
   const [notInflow, setNotInflow] = useState<string[]>([]);
   const [endTargets, setEndTargets] = useState<any[]>([]);
   const [outTargets, setOutTargets] = useState<any[]>([]);
   const [doEnd, setDoEnd] = useState(false);
   const [doOut, setDoOut] = useState(true);
+  const [doRemove, setDoRemove] = useState(false);
+  const [unclearList, setUnclearList] = useState<string[]>([]);
   const recordsRef = useRef<CrmRecord[]>([]);
   const targetsRef = useRef<any[]>([]);
 
   const reset = () => {
     setSummary(null); setPlanned([]); setNameMismatch([]); setApplyResult(null);
-    setNotInflow([]); setEndTargets([]); setOutTargets([]); setDoEnd(false); setDoOut(true);
+    setNotInflow([]); setEndTargets([]); setOutTargets([]); setDoEnd(false); setDoOut(true); setDoRemove(false); setUnclearList([]);
     recordsRef.current = [];
   };
 
@@ -119,6 +133,8 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
     const notInf: string[] = [];
     const ends: any[] = [];
     const outs: any[] = [];
+    const unclear: string[] = [];
+    let dRem = 0, unclearCnt = 0;
     let unchanged = 0, failed = 0, multiCnsl = 0, looked = 0, admsFailed = 0;
     let dIns = 0, dUpd = 0, dConf = 0;
     for (const rec of recordsRef.current) {
@@ -142,8 +158,13 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
           if (plan.hasRecentAdmission) notInf.push(patient.name);
         } else {
           admittedNow = plan.isAdmittedNow;
-          days = diffDailyStatus(plan.days, existingAll.get(patient.id) || new Map());
+          days = diffDailyStatus(plan.days, existingAll.get(patient.id) || new Map(), today);
           dIns += days.inserts.length; dUpd += days.updates.length; dConf += days.conflicts.length;
+          dRem += days.removals.length;
+          if (plan.unclearRows.length) {
+            unclearCnt += plan.unclearRows.length;
+            unclear.push(`${patient.name}: ${plan.unclearRows.map((u) => `${mdLabel(u.admsDate)} 입원(${u.admsYn ? `상태 ${u.admsYn}` : '상태 없음'})`).join(', ')}`);
+          }
           const newDischarge = [...days.inserts.map((x) => ({ date: x.date, t: x.type })), ...days.updates.map((x) => ({ date: x.date, t: x.to }))]
             .some((x) => x.t === '퇴원' && x.date === plan.lastDischargeDate);
           if (
@@ -154,7 +175,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
         }
       }
       const hasField = Object.keys(changes).length > 0;
-      const hasDays = days.inserts.length + days.updates.length > 0;
+      const hasDays = days.inserts.length + days.updates.length + days.removals.length > 0;
       if (!hasField && !hasDays) {
         unchanged++;
         if (days.conflicts.length) plans.push({ patient, changes, days, admittedNow });
@@ -165,8 +186,10 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
     setNotInflow(notInf);
     setEndTargets(ends);
     setOutTargets(outs);
+    setUnclearList(unclear);
     setSummary({
-      total: done.total ?? looked, planned: plans.filter((p) => Object.keys(p.changes).length || p.days.inserts.length || p.days.updates.length).length,
+      total: done.total ?? looked, planned: plans.filter((p) => Object.keys(p.changes).length || p.days.inserts.length || p.days.updates.length || p.days.removals.length).length,
+      dRem, unclear: unclearCnt,
       unchanged, mismatch: mismatch.length, failed, multiCnsl,
       dIns, dUpd, dConf, admsFailed, notInflow: notInf.length,
     });
@@ -191,10 +214,12 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
 
   const fieldCount = planned.filter((p) => Object.keys(p.changes).length > 0).length;
   const dayCount = planned.reduce((n, p) => n + p.days.inserts.length + p.days.updates.length, 0);
+  const removeCount = planned.reduce((n, p) => n + p.days.removals.length, 0);
+  const effRemove = doRemove ? removeCount : 0;
 
   const apply = async () => {
     setApplying(true);
-    let ok = 0, failed = 0, daysSaved = 0, daysFailed = 0;
+    let ok = 0, failed = 0, daysSaved = 0, daysFailed = 0, removed = 0, removeFailed = 0;
     const classifyIds: string[] = [];
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
@@ -229,6 +254,25 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
         daysFailed++;
       }
     }
+    if (doRemove) {
+      for (const { patient, days } of planned) {
+        const dates = days.removals.map((x) => x.date);
+        if (dates.length === 0) continue;
+        try {
+          const { error } = await supabase
+            .from('daily_patient_status')
+            .delete()
+            .eq('patient_id', patient.id)
+            .in('status_date', dates)
+            .in('status_type', ['입원', '재원', '퇴원']);
+          if (error) throw error;
+          removed += dates.length;
+        } catch (e) {
+          console.error('일별상태 정리 실패:', patient.id, e);
+          removeFailed++;
+        }
+      }
+    }
     const statusUpdates: { id: string; status: string }[] = [];
     if (doEnd) endTargets.forEach((p) => statusUpdates.push({ id: p.id, status: '치료종료' }));
     if (doOut) outTargets.forEach((p) => statusUpdates.push({ id: p.id, status: '관리 중' }));
@@ -242,10 +286,10 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
       }
     }
     for (let i = 0; i < classifyIds.length; i += 50) callClassifyPatient(classifyIds.slice(i, i + 50));
-    setApplyResult({ ok, failed, daysSaved, daysFailed });
+    setApplyResult({ ok, failed, daysSaved, daysFailed, removed, removeFailed });
     setApplying(false);
     onApplied?.();
-    toast({ title: 'CRM 동기화 적용 완료', description: `성공 ${ok}명 · 실패 ${failed}명 · 일별상태 저장 ${daysSaved}칸 · 실패 ${daysFailed}명` });
+    toast({ title: 'CRM 동기화 적용 완료', description: `성공 ${ok}명 · 실패 ${failed}명 · 일별상태 저장 ${daysSaved}칸 · 실패 ${daysFailed}명 · 정리 ${removed}칸` });
   };
 
   const daysLine = (days: DailyDiff) => {
@@ -296,6 +340,8 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
                 <div className="rounded border p-2">충돌(변경 안 함) <b>{summary.dConf}칸</b></div>
                 <div className="rounded border p-2">입원정보 조회 실패 <b>{summary.admsFailed}명</b></div>
                 <div className="rounded border p-2">유입 아닌데 입원기록 있음 <b>{summary.notInflow}명</b></div>
+                <div className="rounded border p-2">CRM에 없는 입원·재원·퇴원 <b>{summary.dRem}칸</b></div>
+                <div className="rounded border p-2">입원상태 빈 기록 <b>{summary.unclear}건</b> <span className="text-xs text-muted-foreground">(반영 안 함)</span></div>
               </div>
 
               {notInflow.length > 0 && (
@@ -316,7 +362,27 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
                 </details>
               )}
 
-              {(endTargets.length > 0 || outTargets.length > 0) && !applyResult && (
+              {removeCount > 0 && (
+                <details className="rounded border p-2">
+                  <summary className="cursor-pointer font-medium">정리 대상 ({removeCount}칸) — CRM 입원기록에 없는 날</summary>
+                  <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    {planned.filter((p) => p.days.removals.length).map(({ patient, days }) => (
+                      <li key={patient.id}>{patient.name}: {groupRuns(days.removals).join(', ')}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {unclearList.length > 0 && (
+                <details className="rounded border p-2">
+                  <summary className="cursor-pointer font-medium">입원상태 빈 기록 ({summary.unclear}건) — 반영 안 함</summary>
+                  <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    {unclearList.map((u, i) => <li key={i}>{u}</li>)}
+                  </ul>
+                </details>
+              )}
+
+              {(endTargets.length > 0 || outTargets.length > 0 || removeCount > 0) && !applyResult && (
                 <div className="rounded border p-2 space-y-2">
                   {endTargets.length > 0 && (
                     <label className="flex items-start gap-2">
@@ -336,6 +402,15 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
                       </span>
                     </label>
                   )}
+                  {removeCount > 0 && (
+                    <label className="flex items-start gap-2">
+                      <Checkbox checked={doRemove} onCheckedChange={(v) => setDoRemove(v === true)} className="mt-0.5" />
+                      <span>
+                        <span className="font-medium">CRM 입원기록에 없는 날의 입원·재원·퇴원 {removeCount}칸 정리(삭제)</span>
+                        <span className="block text-xs text-muted-foreground">CRM에서 퇴원한 뒤에도 남아 있던 재원 등을 지웁니다. 외래·기타 등은 지우지 않습니다.</span>
+                      </span>
+                    </label>
+                  )}
                 </div>
               )}
 
@@ -348,7 +423,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
 
               {planned.length > 0 && (
                 <div className="rounded border divide-y max-h-[40vh] overflow-y-auto">
-                  {planned.filter((p) => Object.keys(p.changes).length || p.days.inserts.length || p.days.updates.length || p.days.conflicts.length).map(({ patient, changes, days }) => (
+                  {planned.filter((p) => Object.keys(p.changes).length || p.days.inserts.length || p.days.updates.length || p.days.conflicts.length || p.days.removals.length).map(({ patient, changes, days }) => (
                     <div key={patient.id} className="p-2">
                       <div className="font-medium">{patient.name}</div>
                       <ul className="text-xs text-muted-foreground list-disc ml-4">
@@ -356,6 +431,10 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
                           <li key={k}>{describeChange(k, patient[k], v)}</li>
                         ))}
                         {daysLine(days) && <li>{daysLine(days)}</li>}
+                        {days.removals.length > 0 && (() => {
+                          const runs = groupRuns(days.removals);
+                          return <li>정리 후보: {runs.slice(0, 3).join(', ')}{runs.length > 3 ? ` 외 ${runs.length - 3}구간` : ''}</li>;
+                        })()}
                         {days.conflicts.length > 0 && (
                           <li>충돌: {days.conflicts.slice(0, 5).map((c) => `${mdLabel(c.date)} ${c.existing}(CRM ${c.crm})`).join(', ')}{days.conflicts.length > 5 ? ` 외 ${days.conflicts.length - 5}칸` : ''}</li>
                         )}
@@ -366,12 +445,12 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
               )}
 
               {applyResult ? (
-                <div className="text-sm">적용 결과: 성공 {applyResult.ok}명 · 실패 {applyResult.failed}명 · 일별상태 저장 {applyResult.daysSaved}칸 · 실패 {applyResult.daysFailed}명</div>
+                <div className="text-sm">적용 결과: 성공 {applyResult.ok}명 · 실패 {applyResult.failed}명 · 일별상태 저장 {applyResult.daysSaved}칸 · 실패 {applyResult.daysFailed}명 · 정리 {applyResult.removed}칸{applyResult.removeFailed ? ` (정리 실패 ${applyResult.removeFailed}명)` : ''}</div>
               ) : (
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
-                  <Button onClick={apply} disabled={applying || (fieldCount === 0 && dayCount === 0)}>
-                    {applying ? '적용 중...' : `적용 (환자 ${fieldCount}명 · 일별 ${dayCount}칸)`}
+                  <Button onClick={apply} disabled={applying || (fieldCount === 0 && dayCount === 0 && effRemove === 0)}>
+                    {applying ? '적용 중...' : `적용 (환자 ${fieldCount}명 · 일별 ${dayCount}칸${doRemove && removeCount > 0 ? ` · 정리 ${removeCount}칸` : ''})`}
                   </Button>
                 </div>
               )}
