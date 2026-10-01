@@ -6,7 +6,7 @@ import { fetchAllQuery } from '@/lib/fetchAllRows';
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, XCircle, Download } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -14,7 +14,91 @@ interface UploadResult {
   success: number;
   failed: number;
   duplicates: number;
-  notFound: Array<{ chartNumber: string; patientName: string; date: string; time: string; amount: number; nonCoveredAmount: number }>;
+  notFound: Array<{ chartNumber: string; patientName: string; date: string; time: string; amount: number; nonCoveredAmount: number; reason?: string }>;
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+function parseExcelDate(v: any): string | null {
+  if (v === '' || v === null || v === undefined) return null;
+  if (typeof v === 'number') {
+    const d = XLSX.SSF.parse_date_code(v);
+    if (!d || !d.y) return null;
+    return `${d.y}-${pad2(d.m)}-${pad2(d.d)}`;
+  }
+  const s = String(v).trim();
+  const parts = s.split(/[^0-9]+/).filter(Boolean);
+  if (parts.length >= 3 && parts[0].length === 4) {
+    return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+  }
+  const digits = s.replace(/\D/g, '');
+  if (digits.length < 8) return null;
+  const ds = digits.slice(0, 8);
+  return `${ds.slice(0, 4)}-${ds.slice(4, 6)}-${ds.slice(6, 8)}`;
+}
+
+function downloadFailures(items: UploadResult['notFound'], type: 'inpatient' | 'outpatient') {
+  const header = ['순서', '차트번호', '환자성명', '수납일자', '수납시간', '총진료비', '비급여액', '실패사유'];
+  const rows = items.map((it, i) => [i + 1, it.chartNumber, it.patientName, it.date, it.time, it.amount, it.nonCoveredAmount, it.reason || '']);
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  items.forEach((it, i) => {
+    const r = i + 2;
+    ws[`B${r}`] = { t: 's', v: it.chartNumber, z: '@' };
+    ws[`D${r}`] = { t: 's', v: it.date, z: '@' };
+  });
+  ws['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 40 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '매칭실패');
+  const n = new Date();
+  const stamp = `${n.getFullYear()}${pad2(n.getMonth() + 1)}${pad2(n.getDate())}_${pad2(n.getHours())}${pad2(n.getMinutes())}`;
+  XLSX.writeFile(wb, `환자별_${type === 'inpatient' ? '입원' : '외래'}_수입금_실패_${stamp}.xlsx`);
+}
+
+function FailureSection({ result, type }: { result: UploadResult; type: 'inpatient' | 'outpatient' }) {
+  return (
+    <>
+      <div className="mt-4 space-y-1">
+        <Button variant="outline" size="sm" onClick={() => downloadFailures(result.notFound, type)}>
+          <Download className="h-4 w-4 mr-2" />
+          실패 내역 엑셀 다운로드
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          사이트에 환자 등록(또는 차트번호·이름 수정) 후 이 파일을 그대로 다시 업로드하면 됩니다. 이미 들어간 건은 중복으로 자동 제외됩니다.
+        </p>
+      </div>
+      <details className="mt-4">
+        <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+          매칭 실패 내역 ({result.notFound.length}건)
+        </summary>
+        <div className="mt-2 max-h-40 overflow-y-auto text-xs">
+          <table className="w-full">
+            <thead className="bg-muted sticky top-0">
+              <tr>
+                <th className="p-2 text-left">차트번호</th>
+                <th className="p-2 text-left">환자명</th>
+                <th className="p-2 text-left">날짜</th>
+                <th className="p-2 text-left">시간</th>
+                <th className="p-2 text-right">금액</th>
+                <th className="p-2 text-left">사유</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.notFound.map((item, idx) => (
+                <tr key={idx} className="border-b">
+                  <td className="p-2">{item.chartNumber}</td>
+                  <td className="p-2">{item.patientName}</td>
+                  <td className="p-2">{item.date}</td>
+                  <td className="p-2">{item.time}</td>
+                  <td className="p-2 text-right">{item.amount.toLocaleString()}원</td>
+                  <td className="p-2">{item.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </>
+  );
 }
 
 export default function RevenueBulkManagement() {
@@ -118,16 +202,8 @@ export default function RevenueBulkManagement() {
         const amountStr = row['총진료비'];
         const nonCoveredAmountStr = row['비급여액'];
 
-        // 날짜 파싱
-        let date: Date;
-        if (typeof dateStr === 'string' && dateStr.includes('-')) {
-          date = new Date(dateStr);
-        } else if (typeof dateStr === 'number') {
-          const excelEpoch = new Date(1900, 0, 1);
-          date = new Date(excelEpoch.getTime() + (dateStr - 2) * 24 * 60 * 60 * 1000);
-        } else {
-          date = new Date(dateStr);
-        }
+        // 날짜 파싱 (toISOString 미사용)
+        const parsedDate = parseExcelDate(dateStr);
 
         // 금액 파싱
         let amount = 0;
@@ -152,11 +228,11 @@ export default function RevenueBulkManagement() {
         }
 
         // 금액이 0원인 데이터는 제외
-        if (!isNaN(date.getTime()) && chartNumber && patientName && amount > 0) {
+        if (parsedDate && chartNumber && patientName && amount > 0) {
           extractedData.push({
             chartNumber,
             patientName,
-            date: date.toISOString().split('T')[0],
+            date: parsedDate,
             time: String(timeStr).trim(),
             amount,
             nonCoveredAmount
@@ -204,7 +280,12 @@ export default function RevenueBulkManagement() {
         );
 
         if (!patient) {
-          result.notFound.push(item);
+          const byChart = allPatients?.find(p => p.customer_number === item.chartNumber);
+          const byName = (allPatients || []).filter(p => p.name === item.patientName);
+          let reason = '사이트 미등록 환자';
+          if (byChart) reason = `이름 불일치 (사이트: ${byChart.name})`;
+          else if (byName.length > 0) reason = `차트번호 불일치 (사이트: ${byName.map(p => p.customer_number || '-').join(', ')})`;
+          result.notFound.push({ ...item, reason });
           result.failed++;
           continue;
         }
@@ -316,6 +397,7 @@ export default function RevenueBulkManagement() {
             <li>CRM에서 출력한 환자별 입원/외래 수입금 통계 엑셀 파일을 업로드하세요</li>
             <li>차트번호와 환자성명으로 자동 매칭됩니다</li>
             <li>중복된 데이터는 자동으로 제외됩니다</li>
+            <li>매칭 실패 건은 엑셀로 내려받아 수정 후 다시 올릴 수 있습니다</li>
             <li>모든 실장의 관리 환자에 대해 매출이 자동 등록됩니다</li>
           </ul>
         </AlertDescription>
@@ -389,35 +471,7 @@ export default function RevenueBulkManagement() {
                 </div>
 
                 {inpatientResult.notFound.length > 0 && (
-                  <details className="mt-4">
-                    <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
-                      매칭 실패 내역 ({inpatientResult.notFound.length}건)
-                    </summary>
-                    <div className="mt-2 max-h-40 overflow-y-auto text-xs">
-                      <table className="w-full">
-                        <thead className="bg-muted sticky top-0">
-                          <tr>
-                            <th className="p-2 text-left">차트번호</th>
-                            <th className="p-2 text-left">환자명</th>
-                            <th className="p-2 text-left">날짜</th>
-                            <th className="p-2 text-left">시간</th>
-                            <th className="p-2 text-right">금액</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {inpatientResult.notFound.map((item, idx) => (
-                            <tr key={idx} className="border-b">
-                              <td className="p-2">{item.chartNumber}</td>
-                              <td className="p-2">{item.patientName}</td>
-                              <td className="p-2">{item.date}</td>
-                              <td className="p-2">{item.time}</td>
-                              <td className="p-2 text-right">{item.amount.toLocaleString()}원</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </details>
+                  <FailureSection result={inpatientResult} type="inpatient" />
                 )}
               </div>
             )}
@@ -491,35 +545,7 @@ export default function RevenueBulkManagement() {
                 </div>
 
                 {outpatientResult.notFound.length > 0 && (
-                  <details className="mt-4">
-                    <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
-                      매칭 실패 내역 ({outpatientResult.notFound.length}건)
-                    </summary>
-                    <div className="mt-2 max-h-40 overflow-y-auto text-xs">
-                      <table className="w-full">
-                        <thead className="bg-muted sticky top-0">
-                          <tr>
-                            <th className="p-2 text-left">차트번호</th>
-                            <th className="p-2 text-left">환자명</th>
-                            <th className="p-2 text-left">날짜</th>
-                            <th className="p-2 text-left">시간</th>
-                            <th className="p-2 text-right">금액</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {outpatientResult.notFound.map((item, idx) => (
-                            <tr key={idx} className="border-b">
-                              <td className="p-2">{item.chartNumber}</td>
-                              <td className="p-2">{item.patientName}</td>
-                              <td className="p-2">{item.date}</td>
-                              <td className="p-2">{item.time}</td>
-                              <td className="p-2 text-right">{item.amount.toLocaleString()}원</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </details>
+                  <FailureSection result={outpatientResult} type="outpatient" />
                 )}
               </div>
             )}
