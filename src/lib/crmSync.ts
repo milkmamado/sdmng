@@ -34,6 +34,13 @@ const isEmpty = (v: any) => v === null || v === undefined || String(v).trim() ==
 
 export const normalizeName = (s: any) => String(s ?? '').replace(/\s+/g, '');
 
+/** 이름 비교용 — 공백 제거 + 끝에 붙은 숫자(CRM 동명이인 표시 등) 제거 */
+export const nameKey = (s: any) => normalizeName(s).replace(/[0-9]+$/, '');
+/** CRM/엑셀 이름과 사이트 이름이 같은 사람인지 (끝 숫자 차이만 허용) */
+export const sameName = (a: any, b: any) => { const x = nameKey(a); return x !== '' && x === nameKey(b); };
+/** 끝 숫자만 다른 경우 true (완전 일치면 false) */
+export const nameDiffersOnlyBySuffix = (a: any, b: any) => normalizeName(a) !== normalizeName(b) && sameName(a, b);
+
 export function formatPhone(hp?: string): string | null {
   const n = String(hp ?? '').replace(/[^0-9]/g, '');
   if (!n) return null;

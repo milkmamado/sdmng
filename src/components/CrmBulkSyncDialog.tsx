@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { RefreshCw } from 'lucide-react';
 import { callClassifyPatient } from '@/lib/classifyPatient';
 import {
-  CRM_ORIGIN, CRM_MAIN_URL, CrmRecord, diffPatient, describeChange, normalizeName, encodeHashPayload,
+  CRM_ORIGIN, CRM_MAIN_URL, CrmRecord, diffPatient, describeChange, sameName, nameDiffersOnlyBySuffix, encodeHashPayload,
   ADMS_SYNC_START, buildAdmissionDays, diffDailyStatus, localToday, mdLabel, DailyDiff, addDaysStr,
   buildPackagePlan, PackagePlan, PKG_TX_TYPES,
 } from '@/lib/crmSync';
@@ -71,6 +71,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
   const [summary, setSummary] = useState<any>(null);
   const [planned, setPlanned] = useState<Planned[]>([]);
   const [nameMismatch, setNameMismatch] = useState<string[]>([]);
+  const [nameSuffixDiff, setNameSuffixDiff] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
   const [applyResult, setApplyResult] = useState<{ ok: number; failed: number; daysSaved: number; daysFailed: number; removed: number; removeFailed: number; pIns: number; pLink: number; pChg: number; pFail: number } | null>(null);
   const [doPkg, setDoPkg] = useState(true);
@@ -115,7 +116,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
   };
 
   const reset = () => {
-    setSummary(null); setPlanned([]); setNameMismatch([]); setApplyResult(null);
+    setSummary(null); setPlanned([]); setNameMismatch([]); setNameSuffixDiff([]); setApplyResult(null);
     setNotInflow([]); setEndTargets([]); setOutTargets([]); setDoEnd(false); setDoOut(true); setDoRemove(false); setUnclearList([]);
     setDoPkg(true); setUnknownPkgList([]);
     recordsRef.current = [];
@@ -223,6 +224,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
     const today = localToday();
     const plans: Planned[] = [];
     const mismatch: string[] = [];
+    const suffixDiff: string[] = [];
     const notInf: string[] = [];
     const ends: any[] = [];
     const outs: any[] = [];
@@ -236,9 +238,12 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
       const patient = byNo.get(String(rec.clntNo).trim());
       if (!patient) continue;
       if ((rec.cnsl?.count || 0) >= 2) multiCnsl++;
-      if (normalizeName(rec.base?.clntNm) !== normalizeName(patient.name)) {
+      if (!sameName(rec.base?.clntNm, patient.name)) {
         mismatch.push(`${patient.name} (CRM: ${rec.base?.clntNm || '-'})`);
         continue;
+      }
+      if (nameDiffersOnlyBySuffix(rec.base?.clntNm, patient.name)) {
+        suffixDiff.push(`${patient.name} (CRM: ${rec.base?.clntNm})`);
       }
       const changes = diffPatient(patient, rec);
       let days: DailyDiff = EMPTY_DAYS;
@@ -289,6 +294,7 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
     }
     setPlanned(plans);
     setNameMismatch(mismatch);
+    setNameSuffixDiff(suffixDiff);
     setNotInflow(notInf);
     setEndTargets(ends);
     setOutTargets(outs);
@@ -648,6 +654,13 @@ export function CrmBulkSyncDialog({ onApplied }: { onApplied?: () => void }) {
                       </span>
                     </label>
                   )}
+                </div>
+              )}
+
+              {nameSuffixDiff.length > 0 && (
+                <div className="rounded border bg-muted p-2 text-muted-foreground">
+                  <div className="font-medium mb-1">이름 끝 숫자만 다름 ({nameSuffixDiff.length}명) — 같은 환자로 보고 반영</div>
+                  <div className="text-xs">{nameSuffixDiff.join(', ')}</div>
                 </div>
               )}
 
