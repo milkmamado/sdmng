@@ -20,7 +20,7 @@ import { DateRangeFilter } from "@/components/TableFilters/DateRangeFilter";
 import { InflowStatusFilter } from "@/components/TableFilters/InflowStatusFilter";
 import { VisitTypeFilter } from "@/components/TableFilters/VisitTypeFilter";
 import { DiagnosisFilter } from "@/components/TableFilters/DiagnosisFilter";
-import { CrmRecord, decodeHashPayload, diffPatient, describeChange, normalizeName, crmValues } from "@/lib/crmSync";
+import { CrmRecord, decodeHashPayload, diffPatient, describeChange, sameName, crmValues } from "@/lib/crmSync";
 
 interface Patient {
   id: string;
@@ -211,7 +211,7 @@ export default function FirstVisitManagement() {
       }
       const found = existing?.[0];
       if (found) {
-        if (normalizeName(found.name) !== normalizeName(rec.base.clntNm)) {
+        if (!sameName(found.name, rec.base.clntNm)) {
           toast({
             title: '이름 불일치',
             description: `사이트: ${found.name} / CRM: ${rec.base.clntNm || '-'} — 변경하지 않았습니다.`,
