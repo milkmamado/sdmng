@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllQuery } from '@/lib/fetchAllRows';
+import { sameName } from '@/lib/crmSync';
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -276,12 +277,12 @@ export default function RevenueBulkManagement() {
       for (const item of extractedData) {
         // 엑셀의 차트번호를 DB의 고객번호(customer_number)와 매칭, 그리고 환자명도 확인
         const patient = allPatients?.find(p => 
-          p.customer_number === item.chartNumber && p.name === item.patientName
+          p.customer_number === item.chartNumber && sameName(item.patientName, p.name)
         );
 
         if (!patient) {
           const byChart = allPatients?.find(p => p.customer_number === item.chartNumber);
-          const byName = (allPatients || []).filter(p => p.name === item.patientName);
+          const byName = (allPatients || []).filter(p => sameName(item.patientName, p.name));
           let reason = '사이트 미등록 환자';
           if (byChart) reason = `이름 불일치 (사이트: ${byChart.name})`;
           else if (byName.length > 0) reason = `차트번호 불일치 (사이트: ${byName.map(p => p.customer_number || '-').join(', ')})`;
